@@ -7,7 +7,7 @@ import { userStorage } from "../storage/userStorage";
 import { keys } from "../storage/kyes";
 import { history } from "../helperFunctions/navigationHelper";
 
-export const BASE_URL = "https://xfundclientapi.utlam.com:1008/api/v1";
+export const BASE_URL = import.meta.env.VITE_LIVE_BASE_URL;
 
 // export const BASE_URL = "https://xfundtestapi.utlam.com:2939/api/v1";
 
