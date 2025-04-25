@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { useMediaQuery } from "react-responsive";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import Bg from "../svg_assets/sidebar-bg.svg";
 import LogoWhite from "../svg_assets/logo_white.svg";
@@ -18,7 +19,6 @@ import {
   ReceiptText,
   User,
 } from "iconsax-react";
-import { useNavigate } from "react-router-dom";
 
 import StyledText from "./StyledText";
 import { logout } from "../api";
@@ -30,6 +30,8 @@ import { useAuth } from "../context/AuthProvider";
 const ResponsiveSidebar = () => {
   const { setIsAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
 
   const [collapsed, setCollapsed] = useState(false);
   const [toggled, setToggled] = useState(false);
@@ -54,6 +56,87 @@ const ResponsiveSidebar = () => {
     userStorage.removeItem(keys.user);
     setIsAuthenticated(false);
     navigate("/login");
+  };
+
+  // Menu items configuration with paths
+  const menuItems = [
+    {
+      icon: (
+        <Home3
+          variant="Bold"
+          color={Colors.white}
+          size={25}
+        />
+      ),
+      text: "Home",
+      path: "/",
+    },
+    {
+      icon: (
+        <ChartSquare
+          variant="Bold"
+          color={Colors.white}
+          size={25}
+        />
+      ),
+      text: "Mutual Funds",
+      path: "/invest/mutual_fund",
+    },
+    {
+      icon: (
+        <MoneyTime
+          variant="Bold"
+          color={Colors.white}
+          size={25}
+        />
+      ),
+      text: "Fixed Income",
+      path: "/invest/fixed_income",
+    },
+    {
+      icon: (
+        <ReceiptText
+          variant="Bold"
+          color={Colors.white}
+          size={25}
+        />
+      ),
+      text: "Transactions",
+      path: "/transactions",
+    },
+    {
+      icon: (
+        <Briefcase
+          variant="Bold"
+          color={Colors.white}
+          size={25}
+        />
+      ),
+      text: "Portfolio",
+      path: "/portfolio",
+    },
+    {
+      icon: (
+        <User
+          variant="Bold"
+          color={Colors.white}
+          size={25}
+        />
+      ),
+      text: "Profile",
+      path: "/profile",
+    },
+  ];
+
+  // Function to check if menu item is active
+  const isActive = (path) => {
+    // For exact matches like home page
+    if (path === "/" && currentPath === "/") {
+      return true;
+    }
+    // For nested routes, check if current path starts with menu item path
+    // This ensures /profile/personal-details would highlight the Profile menu item
+    return path !== "/" && currentPath.startsWith(path);
   };
 
   return (
@@ -120,108 +203,30 @@ const ResponsiveSidebar = () => {
             </StyledText>
           </MenuItem>
 
-          <MenuItem
-            icon={
-              <Home3
-                variant="Bold"
-                color={Colors.white}
-                size={25}
-              />
-            }
-            component={<a href="/" />}
-          >
-            <StyledText
-              variant="medium"
-              color={Colors.white}
+          {menuItems.map((item, index) => (
+            <MenuItem
+              key={index}
+              icon={item.icon}
+              onClick={() => navigate(item.path)}
+              className={isActive(item.path) ? "active-menu-item" : ""}
+              style={
+                isActive(item.path)
+                  ? {
+                      backgroundColor: "rgba(255, 255, 255, 0.2)",
+                      borderRadius: "8px",
+                      marginBottom: "8px",
+                    }
+                  : { marginBottom: "8px" }
+              }
             >
-              Home
-            </StyledText>
-          </MenuItem>
-          <MenuItem
-            icon={
-              <ChartSquare
-                variant="Bold"
+              <StyledText
+                variant="medium"
                 color={Colors.white}
-                size={25}
-              />
-            }
-            component={<a href="/invest/mutual_fund" />}
-          >
-            <StyledText
-              variant="medium"
-              color={Colors.white}
-            >
-              Mutual Funds
-            </StyledText>
-          </MenuItem>
-          <MenuItem
-            icon={
-              <MoneyTime
-                variant="Bold"
-                color={Colors.white}
-                size={25}
-              />
-            }
-            component={<a href="/invest/fixed_income" />}
-          >
-            <StyledText
-              variant="medium"
-              color={Colors.white}
-            >
-              Fixed Income
-            </StyledText>
-          </MenuItem>
-          <MenuItem
-            icon={
-              <ReceiptText
-                variant="Bold"
-                color={Colors.white}
-                size={25}
-              />
-            }
-            component={<a href="/transactions" />}
-          >
-            <StyledText
-              variant="medium"
-              color={Colors.white}
-            >
-              Transactions
-            </StyledText>
-          </MenuItem>
-          <MenuItem
-            icon={
-              <Briefcase
-                variant="Bold"
-                color={Colors.white}
-                size={25}
-              />
-            }
-            component={<a href="/portfolio" />}
-          >
-            <StyledText
-              variant="medium"
-              color={Colors.white}
-            >
-              Portfolio
-            </StyledText>
-          </MenuItem>
-          <MenuItem
-            icon={
-              <User
-                variant="Bold"
-                color={Colors.white}
-                size={25}
-              />
-            }
-            component={<a href="/profile" />}
-          >
-            <StyledText
-              variant="medium"
-              color={Colors.white}
-            >
-              Profile
-            </StyledText>
-          </MenuItem>
+              >
+                {item.text}
+              </StyledText>
+            </MenuItem>
+          ))}
 
           <div className="sidebar-footer">
             <MenuItem
@@ -231,7 +236,6 @@ const ResponsiveSidebar = () => {
                   size={25}
                 />
               }
-              // component={<a href="/logout" />}
               onClick={logoutUser}
             >
               <StyledText
