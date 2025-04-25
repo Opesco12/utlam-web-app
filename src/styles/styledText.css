@@ -1,0 +1,110 @@
+.text {
+  display: inline-block;
+  cursor: default;
+}
+
+.center {
+  text-align: center;
+}
+
+/* Small screens (default) */
+.heading {
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.subheading {
+  font-size: 18px;
+  line-height: 26px;
+}
+
+.title {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.body {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.label {
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* Medium screens */
+@media screen and (min-width: 768px) {
+  .heading {
+    font-size: 22px;
+    line-height: 32px;
+  }
+
+  .subheading {
+    font-size: 19px;
+    line-height: 28px;
+  }
+
+  .title {
+    font-size: 17px;
+    line-height: 25px;
+  }
+
+  .body {
+    font-size: 15px;
+    line-height: 22px;
+  }
+
+  .label {
+    font-size: 13px;
+    line-height: 19px;
+  }
+}
+
+/* Large screens */
+@media screen and (min-width: 1024px) {
+  .heading {
+    font-size: 25px;
+    line-height: 36px;
+  }
+
+  .subheading {
+    font-size: 20px;
+    line-height: 30px;
+  }
+
+  .title {
+    font-size: 18px;
+    line-height: 26px;
+  }
+
+  .body {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .label {
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+
+.regular {
+  font-family: "IBMRegular", sans-serif;
+  font-weight: 400;
+}
+
+.medium {
+  font-family: "IBMMedium", sans-serif;
+  font-weight: 500;
+}
+
+.semibold {
+  font-family: "IBMSemibold", sans-serif;
+  font-weight: 600;
+}
+
+.bold {
+  font-family: "IBMBold", sans-serif;
+  font-weight: 700;
+}

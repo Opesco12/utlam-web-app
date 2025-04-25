@@ -1,0 +1,24 @@
+/* .btn-toggle {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+} */
+
+.logo {
+  padding: 20px;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 25px;
+  width: 100%;
+}
+
+.ps-menu-button:hover {
+  background-color: rgba(96, 194, 207, 0.4) !important;
+}

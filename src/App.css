@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+#root {
+  width: 100%;
+  margin: 0;
+}
+
+@theme {
+  --color-black: #000000;
+  --color-error: red;
+  --color-light: #d1d1d1;
+  --color-light-bg: #fafafa;
+  --color-light-primary: #60c2cf;
+  --color-secondary: #ffa333;
+  --color-primary: #187088;
+  --color-text: #003334;
+  --color-white: #fff;
+  --color-border: #efefef;
+}
