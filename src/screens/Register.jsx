@@ -172,6 +172,11 @@ const Register = () => {
           <div className="flex items-center justify-center mb-8">
             <div className="flex flex-col gap-5 w-[90%] mx-auto lg:w-[60%]">
               <div className="mt-8 mb-3">
+                <img
+                  src="/images/utlam-logo.svg"
+                  alt="logo"
+                  className="w-15"
+                />
                 <StyledText
                   type="heading"
                   variant="semibold"

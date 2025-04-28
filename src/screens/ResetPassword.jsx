@@ -79,6 +79,11 @@ const ResetPassword = () => {
 
         <div className="flex h-screen items-center justify-center ">
           <div className=" flex flex-col gap-5  w-[90%] mx-auto lg:w-[60%]">
+            <img
+              src="/images/utlam-logo.svg"
+              alt="logo"
+              className="w-15"
+            />
             <div className="mb-3">
               <StyledText
                 type="heading"
