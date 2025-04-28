@@ -161,7 +161,12 @@ const Register = () => {
     <div className="w-full h-screen overflow-hidden">
       <ToastContainer />
       <div className="grid md:grid-cols-2">
-        <div className="bg-primary h-screen hidden md:block"></div>
+        <div className="bg-primary h-screen hidden md:block">
+          <img
+            src="/images/auth-image.svg"
+            className="h-full w-full object-cover"
+          />
+        </div>
 
         <div className="h-screen overflow-y-auto">
           <div className="flex items-center justify-center mb-8">

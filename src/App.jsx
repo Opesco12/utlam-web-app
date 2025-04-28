@@ -20,7 +20,6 @@ import MutualFunds from "./screens/MutualFunds";
 import FixedIncome from "./screens/FixedIncome";
 import PortfolioDetails from "./screens/PortfolioDetails";
 import Transactions from "./screens/Transactions";
-import TransactionDetails from "./screens/TransactionDetails";
 import MutualFundStatement from "./screens/MutualFundStatement";
 import FixedIncomeWithdrawal from "./screens/FixedIcomeWithdrawal";
 import Login from "./screens/Login";
@@ -32,6 +31,9 @@ import NotFound from "./screens/NotFound";
 import PersonalDetails from "./screens/PersonalDetails";
 import BankDetails from "./screens/BankDetails";
 import KYC_1 from "./screens/Kyc_1";
+import StyledText from "./components/StyledText";
+
+import { Colors } from "./constants/Colors";
 
 import {
   PublicRoute,
@@ -43,10 +45,18 @@ const Layout = () => {
   return (
     <ProtectedRoute>
       <div className="flex flex-col h-screen overflow-hidden  md:flex-row">
+        <div className="bg-gray-50 shadow-xl absolute h-15 w-full z-10 top-0 px-6 hidden md:block">
+          <div className="h-full flex items-center ">
+            <img
+              src="/images/logo.svg"
+              alt="logo"
+            />
+          </div>
+        </div>
         <Toaster position="top-right" />
         <ResponsiveSidebar />
-        <main className="overflow-y-auto w-full bg-white ">
-          <div className=" px-[15px] py-[25px] w-full flex-1 mx-auto  md:px-[30px]  lg:px-[45px] md:max-w-[800px] lg:max-w-[940px]">
+        <main className="overflow-y-auto w-full bg-gray-50 ">
+          <div className="px-5 py-8 w-full flex-1 mx-auto md:max-w-[800px] lg:max-w-[980px] md:py-20">
             <Outlet />
           </div>
         </main>
@@ -56,8 +66,6 @@ const Layout = () => {
 };
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
     <Router>
       <AuthProvider>
@@ -115,11 +123,6 @@ function App() {
             <Route
               path="/transactions"
               element={<Transactions />}
-            />
-
-            <Route
-              path="/transaction/details"
-              element={<TransactionDetails />}
             />
 
             <Route

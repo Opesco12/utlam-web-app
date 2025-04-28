@@ -33,4 +33,6 @@ export const endpoints = {
   createBank: "/createbankaccount",
   withdraw: "/debitwallet",
   clientRelationshipManager: "/getclientrelationshipmanager",
+  getClientPhoto: "/getclientphoto",
+  uploadClientPhoto: "/uploadclientphoto",
 };

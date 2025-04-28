@@ -4,7 +4,7 @@ import { Formik, Field, Form, ErrorMessage } from "formik";
 import { AddCircle, Bank } from "iconsax-react";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 import HeaderText from "../components/HeaderText";
 import StyledText from "../components/StyledText";
@@ -42,22 +42,22 @@ const BankDetails = () => {
       .max(100, "Account name can be at most 100 characters"),
   });
 
+  const fetchData = async () => {
+    const clientbanks = await getClientBankAccounts();
+    console.log(clientbanks);
+    setClientbanks(clientbanks);
+
+    const banklist = await getBanks();
+    setBanks(
+      banklist.map((item) => ({
+        label: item.bankName.split("-")[0],
+        value: item.companyId,
+      }))
+    );
+
+    setLoading(false);
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      const clientbanks = await getclientbankaccounts();
-      setClientbanks(clientbanks);
-
-      const banklist = await getBanks();
-      setBanks(
-        banklist.map((item) => ({
-          label: item.bankName.split("-")[0],
-          value: item.companyId,
-        }))
-      );
-
-      setLoading(false);
-    };
-
     fetchData();
   }, []);
 
@@ -72,13 +72,15 @@ const BankDetails = () => {
       countryCode: "NGA",
     };
     const response = await createClientBank(requestData);
+    console.log(response);
     if (response) {
       if (response?.message === "success") {
         toast.success("Bank Details have been added successfully");
-        navigate("/profile");
+        setLoading(true);
+        fetchData();
+        setIsModalOpen(false);
+        setSubmitting(false);
       }
-      setIsModalOpen(false);
-      setSubmitting(false);
     }
   };
 
@@ -95,20 +97,26 @@ const BankDetails = () => {
       <HeaderText>Bank Details</HeaderText>
 
       <div className="grid md:grid-cols-2 gap-3">
-        <BankItem />
-
-        <div
-          onClick={() => setIsModalOpen(true)}
-          className="w-[100%] h-[180px] my-[20px] border rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-50"
-        >
-          <div className="flex items-center justify-center flex-col">
-            <AddCircle
-              size={25}
-              color={Colors.light}
-            />
-            <StyledText color={Colors.light}>Add Bank Details</StyledText>
+        {clientbanks?.map((bank, index) => (
+          <BankItem
+            bank={bank}
+            key={index}
+          />
+        ))}
+        {clientbanks?.length < 1 && (
+          <div
+            onClick={() => setIsModalOpen(true)}
+            className="w-[100%] h-[180px] my-[20px] border border-gray-400 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-50"
+          >
+            <div className="flex items-center justify-center flex-col">
+              <AddCircle
+                size={25}
+                color={Colors.light}
+              />
+              <StyledText color={Colors.light}>Add Bank Details</StyledText>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <CustomModal
@@ -122,6 +130,7 @@ const BankDetails = () => {
             accountNo: "",
             accountName: "",
           }}
+          validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
           {({ isSubmitting }) => (
@@ -245,7 +254,7 @@ const CustomModal = ({ isOpen, onClose, title, children }) => {
   );
 };
 
-const BankItem = () => {
+const BankItem = ({ bank }) => {
   return (
     <div className="w-[100%] my-[20px] h-[180px] bg-primary rounded-lg px-[20px] flex items-center justify-between">
       <div>
@@ -254,18 +263,20 @@ const BankItem = () => {
           type="title"
           color={Colors.white}
         >
-          UNITED BANK FOR AFRICA
+          {bank?.bankName}
         </StyledText>
         <br />
 
-        <StyledText color={Colors.white}>2055664487</StyledText>
+        <StyledText color={Colors.white}>
+          {bank?.beneficiaryAccountNo}
+        </StyledText>
         <br />
 
         <StyledText
           color={Colors.white}
           variant="medium"
         >
-          Evelyn Makinwa
+          {bank?.beneficiaryName}
         </StyledText>
       </div>
       <Bank

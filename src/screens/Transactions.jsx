@@ -9,6 +9,8 @@ import { amountFormatter } from "../helperFunctions/amountFormatter";
 import { Colors } from "../constants/Colors";
 
 import { getTransactions } from "../api";
+import HeaderText from "../components/HeaderText";
+import TransactionSummaryModal from "../components/TransactionSummaryModal";
 
 const Transactions = () => {
   const [loading, setLoading] = useState(true);
@@ -20,6 +22,8 @@ const Transactions = () => {
   const itemsPerPage = 20;
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   useEffect(() => {
     const currentDate = new Date();
@@ -81,14 +85,7 @@ const Transactions = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <StyledText
-        variant="semibold"
-        type="heading"
-        color={Colors.primary}
-        className="my-4"
-      >
-        Transaction History
-      </StyledText>
+      <HeaderText>Transaction History</HeaderText>
 
       <div className="flex-1 rounded-xl bg-white p-5 md:p-3 lg:p-5 shadow-md">
         <MonthYearSelector
@@ -101,6 +98,10 @@ const Transactions = () => {
             <TransactionItem
               transaction={transaction}
               key={index}
+              onClick={() => {
+                setSelectedTransaction(transaction);
+                setIsModalOpen(true);
+              }}
             />
           ))}
         </div>
@@ -110,16 +111,22 @@ const Transactions = () => {
           onPageChange={handlePageChange}
         />
       </div>
+
+      <TransactionSummaryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        transaction={selectedTransaction}
+      />
     </div>
   );
 };
 
-const TransactionItem = ({ transaction }) => {
+const TransactionItem = ({ transaction, onClick }) => {
   const date = new Date(transaction?.valueDate).toDateString();
   const navigate = useNavigate();
   return (
     <div
-      onClick={() => navigate("/transaction/details", { state: transaction })}
+      onClick={onClick}
       className="flex justify-between border-b border-gray-200 py-[15px]"
     >
       <div className="flex w-[60%] flex-col">

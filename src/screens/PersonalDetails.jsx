@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 import HeaderText from "../components/HeaderText";
 import StyledText from "../components/StyledText";
@@ -18,7 +18,7 @@ const TextField = ({ label, ...props }) => {
     <div className="flex flex-col">
       <label className="mb-1 text-sm font-medium">{label}</label>
       <Field
-        className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
         {...props}
       />
       <ErrorMessage
@@ -37,7 +37,7 @@ const SelectField = ({ label, options, ...props }) => {
       <label className="mb-1 text-sm font-medium">{label}</label>
       <Field
         as="select"
-        className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="border border-gray-300  rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
         {...props}
       >
         <option value="">Select {label}</option>
@@ -59,14 +59,14 @@ const SelectField = ({ label, options, ...props }) => {
   );
 };
 
-// Custom Button component to replace AppButton
-const Button = ({ children, type = "button", disabled = false, ...props }) => {
+// Tab component for switching between views
+const Tab = ({ active, onClick, children }) => {
   return (
     <button
-      type={type}
-      disabled={disabled}
-      className={`px-4 py-2 rounded-md bg-${Colors.primary} text-white font-medium hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${Colors.primary} disabled:opacity-50 disabled:cursor-not-allowed`}
-      {...props}
+      onClick={onClick}
+      className={`px-3 rounded-md py-1 font-medium ${
+        active ? `bg-white text-primary` : `text-gray-500 hover:text-gray-700`
+      } transition-colors`}
     >
       {children}
     </button>
@@ -79,6 +79,7 @@ const PersonalDetails = () => {
   const [userData, setUserData] = useState(null);
   const [userHasNextOfKin, setUserHasNextOfKin] = useState(0);
   const [nextOfKin, setNextOfKin] = useState(null);
+  const [activeTab, setActiveTab] = useState("personal");
 
   const kinRelationships = [
     { label: "Spouse", value: "Spouse" },
@@ -192,114 +193,137 @@ const PersonalDetails = () => {
     <div>
       <HeaderText>Personal Details</HeaderText>
 
-      <div className="border p-[20px] rounded-lg mt-5">
-        <Formik
-          validationSchema={userProfileSchema}
-          initialValues={initialValues}
-          onSubmit={handleSubmit}
-          enableReinitialize
-        >
-          {({ isSubmitting }) => (
-            <Form className="w-full flex flex-col gap-[40px]">
-              <div className="w-full flex justify-between flex-col md:flex-row">
-                <div className="flex flex-col gap-[15px] w-[100%] md:w-[48%]">
-                  <StyledText
-                    type="title"
-                    color={Colors.text}
-                    style={{ fontWeight: "600" }}
-                  >
-                    Personal Details
-                  </StyledText>
+      <div className=" mt-5">
+        <div className="bg-gray-200 rounded-lg w-fit p-2">
+          <div className="flex">
+            <Tab
+              active={activeTab === "personal"}
+              onClick={() => setActiveTab("personal")}
+            >
+              Personal Details
+            </Tab>
+            <Tab
+              active={activeTab === "nextOfKin"}
+              onClick={() => setActiveTab("nextOfKin")}
+            >
+              Next of Kin
+            </Tab>
+          </div>
+        </div>
 
-                  <div className="flex justify-between relative">
-                    <div className="w-[48%]">
-                      <TextField
-                        name="firstname"
-                        label="First Name"
-                      />
+        <div className="py-6">
+          <Formik
+            validationSchema={userProfileSchema}
+            initialValues={initialValues}
+            onSubmit={handleSubmit}
+            enableReinitialize
+          >
+            {({ isSubmitting }) => (
+              <Form className="w-full">
+                {/* Personal Details Tab Content */}
+                {activeTab === "personal" && (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex justify-between relative">
+                      <div className="w-[48%]">
+                        <TextField
+                          name="firstname"
+                          label="First Name"
+                        />
+                      </div>
+                      <div className="w-[48%]">
+                        <TextField
+                          name="surname"
+                          label="Last Name"
+                        />
+                      </div>
                     </div>
-                    <div className="w-[48%]">
-                      <TextField
-                        name="surname"
-                        label="Last Name"
-                      />
+
+                    <TextField
+                      name="phoneNumber"
+                      label="Phone Number"
+                    />
+
+                    <div className="mt-6">
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="bg-primary text-white w-full py-3 px-4 rounded-md hover:bg-light-primary focus:outline-none focus:ring-2  focus:ring-opacity-50 transition-colors"
+                      >
+                        {isSubmitting ? (
+                          <SmallLoadingSpinner color={Colors.white} />
+                        ) : (
+                          "Save"
+                        )}
+                      </button>
                     </div>
                   </div>
-
-                  <TextField
-                    name="phoneNumber"
-                    label="Phone Number"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-[15px] w-[100%] mt-[20px] md:w-[48%] md:mt-[0px]">
-                  <StyledText
-                    type="title"
-                    color={Colors.text}
-                    style={{ fontWeight: "600" }}
-                  >
-                    Next of kin
-                  </StyledText>
-
-                  <div className="flex justify-between relative">
-                    <div className="w-[48%]">
-                      <TextField
-                        name="kinFirstname"
-                        label="First Name"
-                        disabled={userHasNextOfKin === 1}
-                      />
-                    </div>
-                    <div className="w-[48%]">
-                      <TextField
-                        name="kinLastname"
-                        label="Last Name"
-                        disabled={userHasNextOfKin === 1}
-                      />
-                    </div>
-                  </div>
-
-                  <TextField
-                    name="kinEmail"
-                    label="Email Address"
-                    disabled={userHasNextOfKin === 1}
-                  />
-
-                  <TextField
-                    name="kinPhoneNumber"
-                    label="Phone Number"
-                    disabled={userHasNextOfKin === 1}
-                  />
-
-                  <SelectField
-                    name="kinRelationship"
-                    label="Relationship"
-                    options={kinRelationships}
-                    disabled={userHasNextOfKin === 1}
-                  />
-
-                  <SelectField
-                    name="kinGender"
-                    label="Gender"
-                    options={genderOptions}
-                    disabled={userHasNextOfKin === 1}
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-primary text-white py-2 px-4 rounded-md hover:bg-lightPrimary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors"
-              >
-                {isSubmitting ? (
-                  <SmallLoadingSpinner color={Colors.white} />
-                ) : (
-                  "Save"
                 )}
-              </button>
-            </Form>
-          )}
-        </Formik>
+
+                {/* Next of Kin Tab Content */}
+                {activeTab === "nextOfKin" && (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex justify-between relative">
+                      <div className="w-[48%]">
+                        <TextField
+                          name="kinFirstname"
+                          label="First Name"
+                          disabled={userHasNextOfKin === 1}
+                        />
+                      </div>
+                      <div className="w-[48%]">
+                        <TextField
+                          name="kinLastname"
+                          label="Last Name"
+                          disabled={userHasNextOfKin === 1}
+                        />
+                      </div>
+                    </div>
+
+                    <TextField
+                      name="kinEmail"
+                      label="Email Address"
+                      disabled={userHasNextOfKin === 1}
+                    />
+
+                    <TextField
+                      name="kinPhoneNumber"
+                      label="Phone Number"
+                      disabled={userHasNextOfKin === 1}
+                    />
+
+                    <SelectField
+                      name="kinRelationship"
+                      label="Relationship"
+                      options={kinRelationships}
+                      disabled={userHasNextOfKin === 1}
+                    />
+
+                    <SelectField
+                      name="kinGender"
+                      label="Gender"
+                      options={genderOptions}
+                      disabled={userHasNextOfKin === 1}
+                    />
+
+                    <div className="mt-6">
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="bg-primary text-white w-full py-3 px-4 rounded-md hover:bg-light-primary focus:outline-none focus:ring-2  focus:ring-opacity-50 transition-colors"
+                      >
+                        {isSubmitting ? (
+                          <SmallLoadingSpinner color={Colors.white} />
+                        ) : (
+                          "Save"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </Form>
+            )}
+          </Formik>
+        </div>
       </div>
     </div>
   );

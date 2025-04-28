@@ -15,7 +15,7 @@ import {
 } from "iconsax-react";
 import { Eye, EyeSlash } from "iconsax-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
@@ -77,7 +77,8 @@ const HomeScreen = () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      setTimeout(() => setCopied(false), 10000);
+      toast.success("Copied");
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy text: ", err);
     }
@@ -86,10 +87,10 @@ const HomeScreen = () => {
   const SmallContentBox = ({ icon, title, subtitle, navigateTo, navigate }) => {
     return (
       <div
-        className="border border-gray-300 flex justify-between items-center rounded-lg p-[15px_10px] hover:bg-border gap-[10px] cursor-pointer"
+        className="border border-gray-300 flex justify-between items-center rounded-lg p-[15px_10px] hover:bg-border/50 gap-[10px] cursor-pointer"
         onClick={() => navigate(navigateTo)}
       >
-        <div className="flex items-center gap-[10px]  md:gap-[15px]">
+        <div className="flex items-center gap-[10px] md:gap-[15px]">
           {icon}
           <div>
             <StyledText
@@ -119,12 +120,22 @@ const HomeScreen = () => {
 
   return (
     <div className="md:px-[20px]">
-      <HeaderText>Hello, {name && name}</HeaderText>
+      <HeaderText>Dashboard</HeaderText>
+
+      <StyledText
+        variant="semibold"
+        type="title"
+        className={"mb-4"}
+        color={Colors.primary}
+      >
+        Hello, {name && name}
+      </StyledText>
 
       <div className="flex justify-between flex-wrap flex-col md:flex-col">
+        {/* Mobile balance display - visible only on small screens */}
         <ContentBox
           backgroundColor={Colors.primary}
-          className={"w-[100%] md:px-[30px]"}
+          className={"w-[100%] md:px-[30px] md:hidden"}
         >
           <div className="flex items-center gap-2 ">
             <EmptyWallet
@@ -190,19 +201,115 @@ const HomeScreen = () => {
             </AppRippleButton>
           </div>
         </ContentBox>
-        <ContentBox
-          backgroundColor={Colors.white}
-          className={"w-[49%] hidden md:hidden"}
+
+        {/* Desktop balance display - visible only on medium screens and up */}
+        <div
+          className={"hidden rounded-xl overflow-hidden md:grid md:grid-cols-2"}
         >
-          <div className="flex gap-2 ">
-            <ReceiptText
-              variant="Bold"
-              size={20}
-              color={Colors.primary}
-            />
-            <StyledText color={Colors.primary}>Recent Transactions</StyledText>
+          <div className="bg-light-primary p-5 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 ">
+                <EmptyWallet
+                  variant="Bold"
+                  size={15}
+                  color={Colors.white}
+                />
+                <StyledText
+                  color={Colors.white}
+                  type="label"
+                >
+                  Wallet Balance
+                </StyledText>
+              </div>
+
+              <div className="flex items-center justify-between mb-[40px] mt-[15px]">
+                <StyledText
+                  type="heading"
+                  variant="semibold"
+                  color={Colors.white}
+                >
+                  {hideBalance
+                    ? "₦*******"
+                    : amountFormatter.format(userBalance)}
+                </StyledText>
+                {hideBalance ? (
+                  <EyeSlash
+                    size={25}
+                    color={Colors.white}
+                    variant="Bold"
+                    onClick={() => setHideBalance(!hideBalance)}
+                  />
+                ) : (
+                  <Eye
+                    size={25}
+                    color={Colors.white}
+                    variant="Bold"
+                    onClick={() => setHideBalance(!hideBalance)}
+                  />
+                )}
+              </div>
+            </div>
+            <button className="border border-white py-2 px-4 rounded-lg text-white flex items-center gap-1 justify-start w-fit hover:bg-white/20 transition-colors">
+              <TransmitSqaure2
+                size={25}
+                color={Colors.white}
+                variant="Bold"
+              />{" "}
+              Withdraw
+            </button>
           </div>
-        </ContentBox>
+
+          <div className="bg-primary p-5">
+            <StyledText
+              type="body"
+              color={"white"}
+              variant="semibold"
+            >
+              Your virtual account details
+            </StyledText>
+            <StyledText
+              type="label"
+              color={"white"}
+            >
+              Fund your wallet with the account details below
+            </StyledText>
+            <div className="flex items-center justify-between rounded-lg p-2 border border-light-primary text-white mt-5">
+              <div className="flex flex-col gap-1/2 p-1">
+                <h3>
+                  Bank Name:{" "}
+                  <span className="font-semibold">{`${virtualAccounts[0]?.virtualAccountBankName} (${virtualAccounts[0]?.virtualAccountCurrency})`}</span>
+                </h3>
+                <p>
+                  Account Number:{" "}
+                  <span className="font-semibold">
+                    {virtualAccounts[0]?.virtualAccountNo}
+                  </span>
+                </p>
+                <h4 className="">
+                  Account Holder:{" "}
+                  <span className="font-semibold">
+                    {virtualAccounts[0]?.virtualAccountName}
+                  </span>
+                </h4>
+              </div>
+              {copied ? (
+                <CopySuccess
+                  size={25}
+                  color={Colors.lightPrimary}
+                />
+              ) : (
+                <Copy
+                  size={25}
+                  color={Colors.lightPrimary}
+                  onClick={() =>
+                    handleCopy(virtualAccounts[0]?.virtualAccountNo)
+                  }
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
         <ContentBox
           backgroundColor={Colors.white}
           style={{ marginTop: "35px" }}
@@ -303,7 +410,7 @@ const HomeScreen = () => {
             color={Colors.primary}
             className="mx-auto mt-[20px] mb-[35px]"
           />
-          <div className="grid grid-cols-2 gap-[10px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-[10px]">
             {virtualAccounts?.length > 0 &&
               virtualAccounts?.map((account, index) => (
                 <div

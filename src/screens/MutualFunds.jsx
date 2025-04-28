@@ -42,7 +42,7 @@ const MutualFunds = () => {
     <div>
       <HeaderText>Mutual Funds Investment</HeaderText>
 
-      <ContentBox className={"p-[20px] md:mt-[35px]"}>
+      <ContentBox className={"p-[20px] md:mt-[35px] bg-white"}>
         <div className="flex items-center justify-center my-3">
           <StyledText
             type="label"
@@ -52,7 +52,11 @@ const MutualFunds = () => {
             {getNumberOfProducts()} Investment Products Available
           </StyledText>
         </div>
-        <div className={`grid ${!loading && "grid-cols-2"} gap-[15px]`}>
+        <div
+          className={`grid ${
+            !loading && "grid-cols-2 md:grid-cols-3 "
+          } gap-[15px]`}
+        >
           {loading ? (
             <div className="flex flex-1 items-center justify-center my-[20px]">
               <LargeLoadingSpinner color={Colors.lightPrimary} />

@@ -181,7 +181,7 @@ const Portfolio = () => {
   return (
     <div>
       <HeaderText>My Portfolio</HeaderText>
-      <ContentBox>
+      <ContentBox className={"bg-white"}>
         <div className="flex items-center justify-center flex-col">
           <div className="flex items-center gap-[10px]">
             <Moneys
@@ -207,7 +207,7 @@ const Portfolio = () => {
         </div>
       </ContentBox>
 
-      <ContentBox className={"mt-[35px]"}>
+      <ContentBox className={"mt-[35px] bg-white"}>
         <div className="grid gap-[15px] md:grid-cols-2">
           <PortfolioItem
             product={{

@@ -1,20 +1,41 @@
+import { useEffect, useState } from "react";
 import { Formik, Field, Form } from "formik";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 import { Colors } from "../constants/Colors";
+import HeaderText from "../components/HeaderText";
+
+import { getClientInfo } from "../api";
 
 const KYC_1 = () => {
+  const [clientData, setClientData] = useState(null);
+
   const handleSubmit = (values) => {
     console.log("Form submitted with values:", values);
     // Add your form submission logic here
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await getClientInfo();
+      console.log(data);
+      setClientData(data);
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div className="h-screen w-full">
-      <h1 className="text-xl font-bold mb-4 text-primary">KYC Details</h1>
+      <HeaderText>KYC Details</HeaderText>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
         <Formik
-          initialValues={{ nin: "", bvn: "", governmentId: "" }}
+          enableReinitialize={true}
+          initialValues={{
+            nin: clientData?.nin || "",
+            bvn: clientData?.bvn || "",
+            governmentId: "",
+          }}
           onSubmit={handleSubmit}
         >
           {({ handleSubmit, isSubmitting }) => (

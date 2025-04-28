@@ -143,7 +143,7 @@ const ResponsiveSidebar = () => {
     <>
       {isSmallScreen && (
         <div
-          className="h-20 w-full flex justify-between py-1 px-4"
+          className="h-15 w-full flex justify-between py-1 px-4"
           style={{ backgroundImage: `url(${Bg})` }}
         >
           <div className="flex items-center gap-2">
@@ -185,24 +185,7 @@ const ResponsiveSidebar = () => {
           backgroundImage: `url(${Bg})`,
         }}
       >
-        <Menu>
-          <MenuItem
-            icon={
-              <img
-                src={`${LogoWhite}`}
-                alt="Logo"
-              />
-            }
-            style={{ marginBottom: "40px", pointerEvents: "none" }}
-          >
-            <StyledText
-              variant="medium"
-              color={Colors.white}
-            >
-              UTLAM
-            </StyledText>
-          </MenuItem>
-
+        <Menu className="pt-20">
           {menuItems.map((item, index) => (
             <MenuItem
               key={index}

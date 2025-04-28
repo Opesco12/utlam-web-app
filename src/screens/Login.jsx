@@ -19,7 +19,12 @@ const Login = () => {
     <div className="w-full h-screen bg-white">
       <Toaster position="top-right" />
       <div className="grid md:grid-cols-2">
-        <div className="bg-primary h-screen hidden md:block"></div>
+        <div className="bg-primary h-screen hidden md:block">
+          <img
+            src="/images/auth-image.svg"
+            className="h-full w-full object-cover"
+          />
+        </div>
 
         <div className="flex h-screen items-center justify-center">
           <div className=" flex flex-col gap-5  w-[90%] mx-auto lg:w-[60%]">
