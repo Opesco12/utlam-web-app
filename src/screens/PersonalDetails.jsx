@@ -4,13 +4,20 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import HeaderText from "../components/HeaderText";
-import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
 import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 
-import { getClientInfo, getNextOfKins, createNextOfKin } from "../api";
-import { userProfileSchema } from "../validationSchemas/userSchema";
+import {
+  getClientInfo,
+  getNextOfKins,
+  createNextOfKin,
+  updateClientInfo,
+} from "../api";
+import {
+  personalInfoSchema,
+  nextOfKinSchema,
+} from "../validationSchemas/userSchema";
 
 // Custom TextField component using Formik's Field
 const TextField = ({ label, ...props }) => {
@@ -37,7 +44,7 @@ const SelectField = ({ label, options, ...props }) => {
       <label className="mb-1 text-sm font-medium">{label}</label>
       <Field
         as="select"
-        className="border border-gray-300  rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
         {...props}
       >
         <option value="">Select {label}</option>
@@ -73,6 +80,181 @@ const Tab = ({ active, onClick, children }) => {
   );
 };
 
+// Personal Information Form Component
+const PersonalInfoForm = ({ userData, onSubmit, maritalStatusOptions }) => {
+  const initialValues = {
+    firstname: userData?.firstname || "",
+    surname: userData?.surname || "",
+    phoneNumber: userData?.mobileNumber || "",
+    maritalStatus: userData?.maritalStatus || "",
+    placeOfBirth: userData?.placeOfBirth || "",
+  };
+
+  return (
+    <Formik
+      validationSchema={personalInfoSchema}
+      initialValues={initialValues}
+      onSubmit={onSubmit}
+      enableReinitialize
+    >
+      {({ isSubmitting }) => (
+        <Form className="w-full">
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between relative">
+              <div className="w-[48%]">
+                <TextField
+                  name="firstname"
+                  label="First Name"
+                  disabled
+                />
+              </div>
+              <div className="w-[48%]">
+                <TextField
+                  name="surname"
+                  label="Last Name"
+                  disabled
+                />
+              </div>
+            </div>
+
+            <TextField
+              name="phoneNumber"
+              label="Phone Number"
+              disabled
+            />
+
+            <SelectField
+              name="maritalStatus"
+              label={"Marital Status"}
+              options={maritalStatusOptions}
+              disabled={
+                userData?.maritalStatus !== null &&
+                userData?.maritalStatus !== ""
+              }
+            />
+
+            <TextField
+              name="placeOfBirth"
+              label={"Place of Birth"}
+              disabled={
+                userData?.placeOfBirth !== null && userData?.placeOfBirth !== ""
+              }
+            />
+
+            <div className="mt-6">
+              <button
+                type="submit"
+                disabled={
+                  isSubmitting ||
+                  (userData?.maritalStatus !== null &&
+                    userData?.placeOfBirth !== null)
+                }
+                className="bg-primary text-white w-full py-3 px-4 rounded-md hover:bg-light-primary focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors"
+              >
+                {isSubmitting ? (
+                  <SmallLoadingSpinner color={Colors.white} />
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
+          </div>
+        </Form>
+      )}
+    </Formik>
+  );
+};
+
+// Next of Kin Form Component
+const NextOfKinForm = ({
+  nextOfKin,
+  userHasNextOfKin,
+  kinRelationships,
+  genderOptions,
+  onSubmit,
+}) => {
+  const initialValues = {
+    kinFirstname: nextOfKin?.firstname || "",
+    kinLastname: nextOfKin?.surname || "",
+    kinEmail: nextOfKin?.email || "",
+    kinPhoneNumber: nextOfKin?.telephoneNo || "",
+    kinGender: nextOfKin?.gender || "",
+    kinRelationship: nextOfKin?.relationship || "",
+  };
+
+  return (
+    <Formik
+      validationSchema={nextOfKinSchema}
+      initialValues={initialValues}
+      onSubmit={onSubmit}
+      enableReinitialize
+    >
+      {({ isSubmitting }) => (
+        <Form className="w-full">
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between relative">
+              <div className="w-[48%]">
+                <TextField
+                  name="kinFirstname"
+                  label="First Name"
+                  disabled={userHasNextOfKin === 1}
+                />
+              </div>
+              <div className="w-[48%]">
+                <TextField
+                  name="kinLastname"
+                  label="Last Name"
+                  disabled={userHasNextOfKin === 1}
+                />
+              </div>
+            </div>
+
+            <TextField
+              name="kinEmail"
+              label="Email Address"
+              disabled={userHasNextOfKin === 1}
+            />
+
+            <TextField
+              name="kinPhoneNumber"
+              label="Phone Number"
+              disabled={userHasNextOfKin === 1}
+            />
+
+            <SelectField
+              name="kinRelationship"
+              label="Relationship"
+              options={kinRelationships}
+              disabled={userHasNextOfKin === 1}
+            />
+
+            <SelectField
+              name="kinGender"
+              label="Gender"
+              options={genderOptions}
+              disabled={userHasNextOfKin === 1}
+            />
+
+            <div className="mt-6">
+              <button
+                type="submit"
+                disabled={isSubmitting || userHasNextOfKin === 1}
+                className="bg-primary text-white w-full py-3 px-4 rounded-md hover:bg-light-primary focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors"
+              >
+                {isSubmitting ? (
+                  <SmallLoadingSpinner color={Colors.white} />
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
+          </div>
+        </Form>
+      )}
+    </Formik>
+  );
+};
+
 const PersonalDetails = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -101,15 +283,30 @@ const PersonalDetails = () => {
     { label: "Female", value: "F" },
   ];
 
+  const maritalStatusOptions = [
+    {
+      label: "Single",
+      value: "s",
+    },
+    { label: "Married", value: "m" },
+    { label: "Divorced", value: "d" },
+    { label: "Widowed", value: "w" },
+  ];
+
   const fetchData = async () => {
     try {
       const clientInfo = await getClientInfo();
-      const { firstname, surname, mobileNumber } = clientInfo;
+      const { firstname, surname, mobileNumber, maritalStatus, placeOfBirth } =
+        clientInfo;
       setUserData({
         firstname,
         surname,
         mobileNumber,
+        maritalStatus,
+        placeOfBirth,
       });
+
+      console.log("Client info: ", clientInfo);
 
       const nextOfKins = await getNextOfKins();
       if (nextOfKins.length > 0) {
@@ -128,41 +325,52 @@ const PersonalDetails = () => {
     fetchData();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="h-[100vh] flex items-center justify-center">
-        <LargeLoadingSpinner color={Colors.lightPrimary} />
-      </div>
-    );
-  }
+  const handlePersonalInfoSubmit = async (values, { setSubmitting }) => {
+    try {
+      const personalInfoData = {
+        ...userData,
+        maritalStatus: values.maritalStatus,
+        placeOfBirth: values.placeOfBirth,
+      };
 
-  // Prepare initial form values
-  const initialValues = {
-    firstname: userData?.firstname || "",
-    surname: userData?.surname || "",
-    phoneNumber: userData?.mobileNumber || "",
-    kinFirstname: nextOfKin?.firstname || "",
-    kinLastname: nextOfKin?.surname || "",
-    kinEmail: nextOfKin?.email || "",
-    kinPhoneNumber: nextOfKin?.telephoneNo || "",
-    kinGender: nextOfKin?.gender || "",
-    kinRelationship: nextOfKin?.relationship || "",
+      const response = await updateClientInfo(personalInfoData);
+      console.log("response: ", response);
+
+      if (response !== undefined) {
+        setLoading(true);
+        fetchData();
+        toast.success("Personal information updated successfully");
+      }
+    } catch (error) {
+      toast.error("Failed to update personal information");
+      console.error(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleSubmit = async (values, { setSubmitting }) => {
+  const handleNextOfKinSubmit = async (values, { setSubmitting }) => {
     try {
-      const {
-        kinEmail,
-        kinFirstname,
-        kinLastname,
-        kinPhoneNumber,
-        kinGender,
-        kinRelationship,
-      } = values;
-
       if (userHasNextOfKin === 0) {
-        if (!kinRelationship || !kinGender) {
-          toast.error("Please fill out all fields");
+        const {
+          kinEmail,
+          kinFirstname,
+          kinLastname,
+          kinPhoneNumber,
+          kinGender,
+          kinRelationship,
+        } = values;
+
+        if (
+          !kinFirstname ||
+          !kinLastname ||
+          !kinEmail ||
+          !kinPhoneNumber ||
+          !kinRelationship ||
+          !kinGender
+        ) {
+          toast.error("Please fill out all required fields");
+          setSubmitting(false);
           return;
         }
 
@@ -175,25 +383,36 @@ const PersonalDetails = () => {
           gender: kinGender,
         };
 
-        const data = await createNextOfKin(nextOfKinData);
-        if (data) {
-          toast.success("Profile has been updated successfully");
-          navigate("/profile");
+        const response = await createNextOfKin(nextOfKinData);
+        if (response) {
+          setUserHasNextOfKin(1);
+          setNextOfKin(nextOfKinData);
+          toast.success("Next of kin added successfully");
         }
+      } else {
+        toast.info("You already have a next of kin registered");
       }
     } catch (error) {
-      toast.error("Failed to update profile");
+      toast.error("Failed to add next of kin");
       console.error(error);
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="h-[100vh] flex items-center justify-center">
+        <LargeLoadingSpinner color={Colors.lightPrimary} />
+      </div>
+    );
+  }
+
   return (
     <div>
       <HeaderText>Personal Details</HeaderText>
 
-      <div className=" mt-5">
+      <div className="mt-5">
         <div className="bg-gray-200 rounded-lg w-fit p-2">
           <div className="flex">
             <Tab
@@ -212,117 +431,25 @@ const PersonalDetails = () => {
         </div>
 
         <div className="py-6">
-          <Formik
-            validationSchema={userProfileSchema}
-            initialValues={initialValues}
-            onSubmit={handleSubmit}
-            enableReinitialize
-          >
-            {({ isSubmitting }) => (
-              <Form className="w-full">
-                {/* Personal Details Tab Content */}
-                {activeTab === "personal" && (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex justify-between relative">
-                      <div className="w-[48%]">
-                        <TextField
-                          name="firstname"
-                          label="First Name"
-                        />
-                      </div>
-                      <div className="w-[48%]">
-                        <TextField
-                          name="surname"
-                          label="Last Name"
-                        />
-                      </div>
-                    </div>
+          {/* Personal Details Tab Content */}
+          {activeTab === "personal" && (
+            <PersonalInfoForm
+              userData={userData}
+              onSubmit={handlePersonalInfoSubmit}
+              maritalStatusOptions={maritalStatusOptions}
+            />
+          )}
 
-                    <TextField
-                      name="phoneNumber"
-                      label="Phone Number"
-                    />
-
-                    <div className="mt-6">
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="bg-primary text-white w-full py-3 px-4 rounded-md hover:bg-light-primary focus:outline-none focus:ring-2  focus:ring-opacity-50 transition-colors"
-                      >
-                        {isSubmitting ? (
-                          <SmallLoadingSpinner color={Colors.white} />
-                        ) : (
-                          "Save"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Next of Kin Tab Content */}
-                {activeTab === "nextOfKin" && (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex justify-between relative">
-                      <div className="w-[48%]">
-                        <TextField
-                          name="kinFirstname"
-                          label="First Name"
-                          disabled={userHasNextOfKin === 1}
-                        />
-                      </div>
-                      <div className="w-[48%]">
-                        <TextField
-                          name="kinLastname"
-                          label="Last Name"
-                          disabled={userHasNextOfKin === 1}
-                        />
-                      </div>
-                    </div>
-
-                    <TextField
-                      name="kinEmail"
-                      label="Email Address"
-                      disabled={userHasNextOfKin === 1}
-                    />
-
-                    <TextField
-                      name="kinPhoneNumber"
-                      label="Phone Number"
-                      disabled={userHasNextOfKin === 1}
-                    />
-
-                    <SelectField
-                      name="kinRelationship"
-                      label="Relationship"
-                      options={kinRelationships}
-                      disabled={userHasNextOfKin === 1}
-                    />
-
-                    <SelectField
-                      name="kinGender"
-                      label="Gender"
-                      options={genderOptions}
-                      disabled={userHasNextOfKin === 1}
-                    />
-
-                    <div className="mt-6">
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="bg-primary text-white w-full py-3 px-4 rounded-md hover:bg-light-primary focus:outline-none focus:ring-2  focus:ring-opacity-50 transition-colors"
-                      >
-                        {isSubmitting ? (
-                          <SmallLoadingSpinner color={Colors.white} />
-                        ) : (
-                          "Save"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </Form>
-            )}
-          </Formik>
+          {/* Next of Kin Tab Content */}
+          {activeTab === "nextOfKin" && (
+            <NextOfKinForm
+              nextOfKin={nextOfKin}
+              userHasNextOfKin={userHasNextOfKin}
+              kinRelationships={kinRelationships}
+              genderOptions={genderOptions}
+              onSubmit={handleNextOfKinSubmit}
+            />
+          )}
         </div>
       </div>
     </div>

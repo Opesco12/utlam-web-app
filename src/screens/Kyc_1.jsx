@@ -34,7 +34,8 @@ const KYC_1 = () => {
           initialValues={{
             nin: clientData?.nin || "",
             bvn: clientData?.bvn || "",
-            governmentId: "",
+            identificationType: "",
+            identificationExpiry: "",
           }}
           onSubmit={handleSubmit}
         >
@@ -75,7 +76,7 @@ const KYC_1 = () => {
                   htmlFor="governmentId"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Government Issued Identification
+                  Identification Type
                 </label>
                 <Field
                   as="select"
@@ -90,6 +91,20 @@ const KYC_1 = () => {
                   <option value="drivers_license">Driver's License</option>
                   <option value="voters_card">Voter's Card</option>
                 </Field>
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="identificationType"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Identification Type
+                </label>
+                <Field
+                  id="identificationType"
+                  name="identificationType"
+                  type="date"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
               </div>
 
               <button

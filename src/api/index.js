@@ -117,7 +117,6 @@ export const getCountries = async () => {
 };
 
 export const registerNewIndividual = async (info) => {
-  console.log(info);
   try {
     const data = await apiCall({
       method: "POST",
@@ -152,6 +151,20 @@ export const getClientInfo = async () => {
       toast.error("Unable to fetch client information");
     }
     return null;
+  }
+};
+
+export const updateClientInfo = async (info) => {
+  console.log(info);
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.UpdateClientInfo,
+      method: "POST",
+      data: info,
+    });
+    return data;
+  } catch (error) {
+    toast.error("An error occured");
   }
 };
 

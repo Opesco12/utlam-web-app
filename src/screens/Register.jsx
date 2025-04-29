@@ -62,6 +62,7 @@ const step2ValidationSchema = Yup.object().shape({
     .min(2, "State must be at least 2 characters")
     .max(50, "State must not exceed 50 characters"),
   country: Yup.string().required("Country is required"),
+  referredBy: Yup.string(),
 });
 
 // Step Indicator Component
@@ -123,6 +124,7 @@ const Register = () => {
     city: "",
     state: "",
     clientType: 1,
+    referredBy: "",
   });
 
   const genderOptions = [
@@ -283,6 +285,7 @@ const Register = () => {
                       gender,
                       country,
                       state,
+                      referredBy,
                     } = values;
                     const DOB = new Date(dob).toISOString();
 
@@ -299,6 +302,7 @@ const Register = () => {
                       city: city,
                       state: state,
                       country: country,
+                      referredBy: referredBy,
                     };
 
                     const response = await registerNewIndividual(data);
@@ -363,6 +367,12 @@ const Register = () => {
                         name="confirmPassword"
                         label="Confirm Password"
                         type="password"
+                      />
+
+                      <AppTextField
+                        onChange={handleChange("referredBy")}
+                        name="referredBy"
+                        label="Referral Code"
                       />
 
                       <div className="flex gap-4 flex-col">

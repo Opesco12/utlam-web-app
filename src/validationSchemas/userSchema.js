@@ -61,6 +61,23 @@ export const passwordResetSchema = Yup.object().shape({
   email: Yup.string().email("Email is not valid").required("Email is required"),
 });
 
+export const personalInfoSchema = Yup.object().shape({
+  maritalStatus: Yup.string().trim().required("Marital status is required"),
+  placeOfBirth: Yup.string().trim().required("Place of birth is required"),
+});
+
+// Schema for next of kin form
+export const nextOfKinSchema = Yup.object().shape({
+  kinFirstname: Yup.string().trim().required("First name is required"),
+  kinLastname: Yup.string().trim().required("Last name is required"),
+  kinEmail: Yup.string()
+    .email("Invalid email address")
+    .required("Email is required"),
+  kinPhoneNumber: Yup.string().trim().required("Phone number is required"),
+  kinGender: Yup.string().required("Gender is required"),
+  kinRelationship: Yup.string().required("Relationship is required"),
+});
+
 export const userProfileSchema = Yup.object().shape({
   firstname: Yup.string()
     .required("First name is required")

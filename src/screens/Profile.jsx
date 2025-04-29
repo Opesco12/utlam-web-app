@@ -8,6 +8,7 @@ import {
   Profile as ProfileIcon,
   UserCirlceAdd,
   User,
+  Profile2User,
 } from "iconsax-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -127,6 +128,16 @@ const Profile = () => {
       ),
       title: "KYC",
       path: "/kyc/1",
+    },
+    {
+      icon: (
+        <Profile2User
+          size={25}
+          color={Colors.primary}
+        />
+      ),
+      title: "Referral",
+      path: "/profile/referral",
     },
     {
       icon: (

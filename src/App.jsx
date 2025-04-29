@@ -40,6 +40,7 @@ import {
   ProtectedRoute,
   AuthProvider,
 } from "./context/AuthProvider";
+import Referral from "./screens/Referral";
 
 const Layout = () => {
   return (
@@ -133,6 +134,11 @@ function App() {
             <Route
               path="/profile/bank-details"
               element={<BankDetails />}
+            />
+
+            <Route
+              path="/profile/referral"
+              element={<Referral />}
             />
 
             <Route
