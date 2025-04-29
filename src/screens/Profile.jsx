@@ -41,7 +41,7 @@ const ProfileMenuItem = ({ icon, title, onClick, showDivider = true }) => {
           variant="Bold"
         />
       </div>
-      {showDivider && <hr className="border-gray-400" />}
+      {showDivider && <hr className="border-gray-300" />}
     </>
   );
 };
@@ -237,7 +237,7 @@ const Profile = () => {
           <div className="flex items-center gap-2 mb-7">
             <StyledText color={Colors.primary}>Account Settings</StyledText>
           </div>
-          <hr className="border-gray-400" />
+          <hr className="border-gray-300" />
 
           {menuItems.map((item, index) => (
             <ProfileMenuItem
