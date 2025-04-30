@@ -1,5 +1,6 @@
 export const endpoints = {
   RegisterNewIndividual: "/registernewindividual",
+  RegisterExistingIndividual: "/registerexistingindividual",
   Login: "/login",
   Logout: "/logout",
   Login2Fa: "/login2fa",

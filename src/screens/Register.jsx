@@ -3,6 +3,8 @@ import { Formik } from "formik";
 import { toast, ToastContainer } from "react-toastify";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Country, State, City } from "country-state-city";
+import csc from "countries-states-cities";
 
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
@@ -29,9 +31,6 @@ const step1ValidationSchema = Yup.object().shape({
   email: Yup.string().email("Email is not valid").required("Email is required"),
   dob: Yup.string().required("Date of Birth is required"),
   gender: Yup.string().required("Gender is required"),
-});
-
-const step2ValidationSchema = Yup.object().shape({
   password: Yup.string()
     .required("Password is required")
     .min(6, "Password must be at least 6 characters")
@@ -49,6 +48,9 @@ const step2ValidationSchema = Yup.object().shape({
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password"), null], "Passwords must match")
     .required("Confirm Password is required"),
+});
+
+const step2ValidationSchema = Yup.object().shape({
   address: Yup.string()
     .required("Address is required")
     .min(5, "Address must be at least 5 characters")
@@ -57,11 +59,14 @@ const step2ValidationSchema = Yup.object().shape({
     .required("City is required")
     .min(2, "City must be at least 2 characters")
     .max(50, "City must not exceed 50 characters"),
-  state: Yup.string()
-    .required("State is required")
-    .min(2, "State must be at least 2 characters")
-    .max(50, "State must not exceed 50 characters"),
+  state: Yup.string().required("State is required"),
   country: Yup.string().required("Country is required"),
+  nin: Yup.string()
+    .required("NIN is required")
+    .matches(/^\d{11}$/, "NIN must be exactly 11 digits"),
+  bvn: Yup.string()
+    .required("BVN is required")
+    .matches(/^\d{11}$/, "BVN must be exactly 11 digits"),
   referredBy: Yup.string(),
 });
 
@@ -110,19 +115,26 @@ const Register = () => {
   const [gender, setGender] = useState("");
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedCountryIso2, setSelectedCountryIso2] = useState("");
+  const [states, setStates] = useState([]);
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedStateName, setSelectedStateName] = useState("");
+  const [cities, setCities] = useState([]);
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
     phoneNumber: "",
     email: "",
     password: "",
+    confirmPassword: "",
     dob: "",
     gender: "",
     country: "",
-    confirmPassword: "",
     address: "",
     city: "",
     state: "",
+    nin: "",
+    bvn: "",
     clientType: 1,
     referredBy: "",
   });
@@ -135,6 +147,7 @@ const Register = () => {
   useEffect(() => {
     const fetchData = async () => {
       const countries = await getCountries();
+
       if (countries) {
         setCountries(
           countries.map((country) => ({
@@ -147,6 +160,30 @@ const Register = () => {
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (selectedCountry) {
+      const country = csc
+        .getAllCountries()
+        .find((c) => c.iso3 === selectedCountry);
+
+      if (country) {
+        setSelectedCountryIso2(country.iso2);
+        const statesList = State.getStatesOfCountry(country.iso2);
+        setStates(statesList);
+      }
+    }
+  }, [selectedCountry]);
+
+  useEffect(() => {
+    if (selectedCountryIso2 && selectedState) {
+      const citiesList = City.getCitiesOfState(
+        selectedCountryIso2,
+        selectedState
+      );
+      setCities(citiesList);
+    }
+  }, [selectedCountryIso2, selectedState]);
 
   // Handle next step
   const handleNextStep = (values) => {
@@ -207,9 +244,16 @@ const Register = () => {
                 <Formik
                   validationSchema={step1ValidationSchema}
                   initialValues={formData}
-                  // onSubmit={}
+                  validateOnChange={false}
+                  validateOnBlur={false}
                 >
-                  {({ handleChange, handleSubmit, setFieldValue }) => (
+                  {({
+                    handleChange,
+                    handleSubmit,
+                    setFieldValue,
+                    errors,
+                    values,
+                  }) => (
                     <>
                       <AppTextField
                         onChange={handleChange("firstname")}
@@ -249,7 +293,19 @@ const Register = () => {
                         placeholder=""
                         onChange={handleChange("dob")}
                       />
-                      <AppButton onClick={(values) => handleNextStep(values)}>
+                      <AppTextField
+                        onChange={handleChange("password")}
+                        name="password"
+                        label="Password"
+                        type="password"
+                      />
+                      <AppTextField
+                        onChange={handleChange("confirmPassword")}
+                        name="confirmPassword"
+                        label="Confirm Password"
+                        type="password"
+                      />
+                      <AppButton onClick={() => handleNextStep(values)}>
                         Continue
                       </AppButton>
 
@@ -260,6 +316,18 @@ const Register = () => {
                           onClick={() => navigate("/login")}
                         >
                           Sign in
+                        </span>
+                      </StyledText>
+
+                      <StyledText style={{ textAlign: "center" }}>
+                        Existing User?
+                        <span
+                          className="text-primary cursor-pointer ml-1"
+                          onClick={() =>
+                            navigate("/existing-user-registration")
+                          }
+                        >
+                          Register again
                         </span>
                       </StyledText>
                     </>
@@ -285,6 +353,8 @@ const Register = () => {
                       gender,
                       country,
                       state,
+                      nin,
+                      bvn,
                       referredBy,
                     } = values;
                     const DOB = new Date(dob).toISOString();
@@ -300,8 +370,10 @@ const Register = () => {
                       gender: gender,
                       address1: address,
                       city: city,
-                      state: state,
+                      state: selectedStateName,
                       country: country,
+                      nin: nin,
+                      bvn: bvn,
                       referredBy: referredBy,
                     };
 
@@ -331,21 +403,6 @@ const Register = () => {
                     setFieldValue,
                   }) => (
                     <>
-                      <AppTextField
-                        name="address"
-                        onChange={handleChange("address")}
-                        label="Address"
-                      />
-                      <AppTextField
-                        name="city"
-                        onChange={handleChange("city")}
-                        label="City"
-                      />
-                      <AppTextField
-                        name="state"
-                        onChange={handleChange("state")}
-                        label="State"
-                      />
                       <AppSelect
                         name="country"
                         label="Country"
@@ -356,19 +413,56 @@ const Register = () => {
                           setFieldValue("country", value);
                         }}
                       />
-                      <AppTextField
-                        onChange={handleChange("password")}
-                        name="password"
-                        label="Password"
-                        type="password"
-                      />
-                      <AppTextField
-                        onChange={handleChange("confirmPassword")}
-                        name="confirmPassword"
-                        label="Confirm Password"
-                        type="password"
-                      />
+                      <AppSelect
+                        name="state"
+                        options={states.map((state) => ({
+                          label: state.name,
+                          value: state.isoCode,
+                        }))}
+                        onValueChange={(value) => {
+                          setSelectedState(value);
 
+                          // Find the state object to get its name
+                          const stateObj = states.find(
+                            (state) => state.isoCode === value
+                          );
+                          if (stateObj) {
+                            setSelectedStateName(stateObj.name);
+                            setFormData({ ...formData, state: value });
+                            setFieldValue("state", value); // Use the isoCode for the select value
+                          }
+                        }}
+                        label="State"
+                      />
+                      <AppSelect
+                        name="city"
+                        options={cities.map((city) => ({
+                          label: city.name,
+                          value: city.name,
+                        }))}
+                        onValueChange={(value) => {
+                          setFormData({ ...formData, city: value });
+                          setFieldValue("city", value);
+                        }}
+                        label="City"
+                      />
+                      <AppTextField
+                        name="address"
+                        onChange={handleChange("address")}
+                        label="Address"
+                      />
+                      <AppTextField
+                        onChange={handleChange("nin")}
+                        name="nin"
+                        label="NIN (National Identification Number)"
+                        maxLength={11}
+                      />
+                      <AppTextField
+                        onChange={handleChange("bvn")}
+                        name="bvn"
+                        label="BVN (Bank Verification Number)"
+                        maxLength={11}
+                      />
                       <AppTextField
                         onChange={handleChange("referredBy")}
                         name="referredBy"

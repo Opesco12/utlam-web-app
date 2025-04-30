@@ -8,10 +8,19 @@ import { getClientInfo } from "../api";
 
 const KYC_1 = () => {
   const [clientData, setClientData] = useState(null);
+  const [proofOfAddressFile, setProofOfAddressFile] = useState(null);
 
   const handleSubmit = (values) => {
     console.log("Form submitted with values:", values);
-    // Add your form submission logic here
+    console.log("Uploaded proof of address:", proofOfAddressFile);
+    // Add your form submission logic here including the file
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.currentTarget.files[0];
+    if (file) {
+      setProofOfAddressFile(file);
+    }
   };
 
   useEffect(() => {
@@ -94,17 +103,39 @@ const KYC_1 = () => {
               </div>
               <div className="mb-4">
                 <label
-                  htmlFor="identificationType"
+                  htmlFor="identificationExpiry"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Identification Type
+                  Identification Expiry
                 </label>
                 <Field
-                  id="identificationType"
-                  name="identificationType"
+                  id="identificationExpiry"
+                  name="identificationExpiry"
                   type="date"
                   className="w-full p-2 border border-gray-300 rounded-md"
                 />
+              </div>
+
+              <div className="mb-4">
+                <label
+                  htmlFor="proofOfAddress"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Proof of Address
+                </label>
+                <input
+                  id="proofOfAddress"
+                  name="proofOfAddress"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleFileChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+                {proofOfAddressFile && (
+                  <p className="text-xs text-green-600 mt-1">
+                    File selected: {proofOfAddressFile.name}
+                  </p>
+                )}
               </div>
 
               <button

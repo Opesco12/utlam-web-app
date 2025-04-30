@@ -24,7 +24,7 @@ const getAuthToken = async () => {
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000,
+  timeout: 60000,
 });
 
 // Add a response interceptor to handle 401 errors globally
@@ -121,6 +121,28 @@ export const registerNewIndividual = async (info) => {
     const data = await apiCall({
       method: "POST",
       endpoint: endpoints.RegisterNewIndividual,
+      data: info,
+      requiresAuth: false,
+    });
+    return data;
+  } catch (error) {
+    if (!(error instanceof AuthenticationError)) {
+      console.log(error);
+      if (error.response && error.response.status === 400) {
+        toast.error("Invalid Details or account already exists");
+      } else {
+        toast.error("An error occurred");
+      }
+    }
+    return null;
+  }
+};
+
+export const registerExistingIndividual = async (info) => {
+  try {
+    const data = await apiCall({
+      method: "POST",
+      endpoint: endpoints.RegisterExistingIndividual,
       data: info,
       requiresAuth: false,
     });

@@ -1,19 +1,14 @@
 import React, { useEffect, useState } from "react";
 import {
-  ArrowCircleRight2,
   Bank,
-  Copy,
-  CopySuccess,
+  Briefcase,
   EmptyWallet,
-  FavoriteChart,
   Flash,
-  ReceiptText,
   ReceiveSquare2,
-  Reserve,
-  StatusUp,
   TransmitSqaure2,
+  Eye,
+  EyeSlash,
 } from "iconsax-react";
-import { Eye, EyeSlash } from "iconsax-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -24,8 +19,17 @@ import HeaderText from "../components/HeaderText";
 import ContentBox from "../components/ContentBox";
 import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
 import AppModal from "../components/AppModal";
+import QuickAccessItems from "../components/QuickAccess";
+import VirtualAccountItem from "../components/VirtualAccountItem";
+import BalanceCard from "../components/BalanceCard";
 
-import { getVirtualAccounts, getWalletBalance } from "../api";
+import {
+  getVirtualAccounts,
+  getWalletBalance,
+  getProducts,
+  getMutualFundOnlineBalances,
+  getFixedIcomeOnlineBalances,
+} from "../api";
 import { amountFormatter } from "../helperFunctions/amountFormatter";
 import { userStorage } from "../storage/userStorage";
 import { keys } from "../storage/kyes";
@@ -38,40 +42,20 @@ const HomeScreen = () => {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [virtualAccounts, setVirtualAccounts] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [portfolioData, setPortfolioData] = useState({
+    mutualFundBalances: [],
+    fixedIncomePortfolio: [],
+    portfolioBalance: 0,
+  });
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  const toggleHideBalance = () => setHideBalance((prev) => !prev);
 
-      const accounts = await getVirtualAccounts();
-      accounts && setVirtualAccounts(accounts);
-
-      const userData = userStorage.getItem(keys.user);
-      setName(userData.fullName);
-
-      const data = await getWalletBalance();
-
-      if (data) {
-        setUserBalance(data[0]?.amount);
-      } else {
-        toast.error("Unable to fetch data");
-      }
-
-      setLoading(false);
-    };
-
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="h-[100vh] flex items-center justify-center">
-        <LargeLoadingSpinner color={Colors.lightPrimary} />
-      </div>
-    );
-  }
+  const toggleDepositModal = (state) => {
+    setIsDepositModalOpen(state);
+    if (!state) setCopied(false);
+  };
 
   const handleCopy = async (text) => {
     try {
@@ -84,39 +68,120 @@ const HomeScreen = () => {
     }
   };
 
-  const SmallContentBox = ({ icon, title, subtitle, navigateTo, navigate }) => {
+  // Fetch user data and wallet balance
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setLoading(true);
+
+      try {
+        // Get virtual accounts
+        const accounts = await getVirtualAccounts();
+        if (accounts) setVirtualAccounts(accounts);
+
+        // Get user data
+        const userData = userStorage.getItem(keys.user);
+        setName(userData?.fullName);
+
+        // Get wallet balance
+        const data = await getWalletBalance();
+        if (data) {
+          setUserBalance(data[0]?.amount);
+        } else {
+          toast.error("Unable to fetch wallet balance");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        toast.error("An error occurred while fetching your data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  // Fetch portfolio data
+  useEffect(() => {
+    const fetchPortfolioData = async () => {
+      try {
+        // Get mutual fund balances
+        const mutualFundBalances = await getMutualFundOnlineBalances();
+
+        // Get investible products
+        const investibleProducts = await getProducts();
+
+        if (investibleProducts) {
+          // Process fixed income portfolios
+          const fixedIncomePortfolios = await Promise.all(
+            investibleProducts
+              .filter((product) => product.portfolioType === 9)
+              .map(async (product) => {
+                const fixedIncomeBalances = await getFixedIcomeOnlineBalances(
+                  product?.portfolioId
+                );
+
+                if (fixedIncomeBalances?.length > 0) {
+                  return {
+                    portfolio: product.portfolioName,
+                    investments: fixedIncomeBalances,
+                    portfolioType: product.portfolioType,
+                    portfolioId: product.portfolioId,
+                  };
+                }
+                return null;
+              })
+          );
+
+          // Update portfolio data
+          setPortfolioData((prev) => ({
+            ...prev,
+            mutualFundBalances: mutualFundBalances || [],
+            fixedIncomePortfolio: fixedIncomePortfolios.filter(
+              (item) => item !== null
+            ),
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching portfolio data:", error);
+        toast.error("An error occurred while fetching portfolio data");
+      }
+    };
+
+    fetchPortfolioData();
+  }, []);
+
+  // Calculate portfolio balance
+  useEffect(() => {
+    const { mutualFundBalances, fixedIncomePortfolio } = portfolioData;
+
+    let totalBalance = 0;
+
+    // Add fixed income values
+    fixedIncomePortfolio.forEach((portfolio) => {
+      portfolio.investments?.forEach((investment) => {
+        totalBalance += investment?.currentValue || 0;
+      });
+    });
+
+    // Add mutual fund values
+    mutualFundBalances?.forEach((investment) => {
+      totalBalance += investment?.balance || 0;
+    });
+
+    setPortfolioData((prev) => ({
+      ...prev,
+      portfolioBalance: totalBalance,
+    }));
+  }, [portfolioData.mutualFundBalances, portfolioData.fixedIncomePortfolio]);
+
+  // Loading state
+  if (loading) {
     return (
-      <div
-        className="border border-gray-300 flex justify-between items-center rounded-lg p-[15px_10px] hover:bg-border/50 gap-[10px] cursor-pointer"
-        onClick={() => navigate(navigateTo)}
-      >
-        <div className="flex items-center gap-[10px] md:gap-[15px]">
-          {icon}
-          <div>
-            <StyledText
-              type="title"
-              variant="semibold"
-              color={Colors.primary}
-            >
-              {title}
-            </StyledText>
-            <br />
-            <StyledText
-              type="body"
-              color={Colors.light}
-            >
-              {subtitle}
-            </StyledText>
-          </div>
-        </div>
-        <ArrowCircleRight2
-          size={35}
-          color={Colors.primary}
-          variant="Bold"
-        />
+      <div className="h-[100vh] flex items-center justify-center">
+        <LargeLoadingSpinner color={Colors.lightPrimary} />
       </div>
     );
-  };
+  }
 
   return (
     <div className="md:px-[20px]">
@@ -125,19 +190,19 @@ const HomeScreen = () => {
       <StyledText
         variant="semibold"
         type="title"
-        className={"mb-4"}
+        className="mb-4"
         color={Colors.primary}
       >
-        Hello, {name && name}
+        Hello, {name || ""}
       </StyledText>
 
       <div className="flex justify-between flex-wrap flex-col md:flex-col">
-        {/* Mobile balance display - visible only on small screens */}
+        {/* Mobile Balance Display */}
         <ContentBox
           backgroundColor={Colors.primary}
-          className={"w-[100%] md:px-[30px] md:hidden"}
+          className="w-full md:px-[30px] md:hidden"
         >
-          <div className="flex items-center gap-2 ">
+          <div className="flex items-center gap-2">
             <EmptyWallet
               variant="Bold"
               size={20}
@@ -145,6 +210,7 @@ const HomeScreen = () => {
             />
             <StyledText color={Colors.white}>Wallet Balance</StyledText>
           </div>
+
           <div className="flex items-center justify-between mb-[40px] mt-[15px]">
             <StyledText
               type="subheading"
@@ -158,14 +224,14 @@ const HomeScreen = () => {
                 size={25}
                 color={Colors.white}
                 variant="Bold"
-                onClick={() => setHideBalance(!hideBalance)}
+                onClick={toggleHideBalance}
               />
             ) : (
               <Eye
                 size={25}
                 color={Colors.white}
                 variant="Bold"
-                onClick={() => setHideBalance(!hideBalance)}
+                onClick={toggleHideBalance}
               />
             )}
           </div>
@@ -173,10 +239,7 @@ const HomeScreen = () => {
           <div className="flex flex-row justify-between">
             <div
               className="w-[48%]"
-              onClick={() => {
-                setIsDepositModalOpen(true);
-                setCopied(false);
-              }}
+              onClick={() => toggleDepositModal(true)}
             >
               <AppRippleButton backgroundColor={Colors.lightPrimary}>
                 <ReceiveSquare2
@@ -190,7 +253,7 @@ const HomeScreen = () => {
 
             <AppRippleButton
               backgroundColor={Colors.white}
-              width={"48%"}
+              width="48%"
             >
               <TransmitSqaure2
                 size={25}
@@ -202,118 +265,100 @@ const HomeScreen = () => {
           </div>
         </ContentBox>
 
-        {/* Desktop balance display - visible only on medium screens and up */}
-        <div
-          className={"hidden rounded-xl overflow-hidden md:grid md:grid-cols-2"}
-        >
-          <div className="bg-light-primary p-5 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-2 ">
-                <EmptyWallet
-                  variant="Bold"
-                  size={15}
-                  color={Colors.white}
-                />
-                <StyledText
-                  color={Colors.white}
-                  type="label"
-                >
-                  Wallet Balance
-                </StyledText>
-              </div>
-
-              <div className="flex items-center justify-between mb-[40px] mt-[15px]">
-                <StyledText
-                  type="heading"
-                  variant="semibold"
-                  color={Colors.white}
-                >
-                  {hideBalance
-                    ? "₦*******"
-                    : amountFormatter.format(userBalance)}
-                </StyledText>
-                {hideBalance ? (
-                  <EyeSlash
-                    size={25}
-                    color={Colors.white}
-                    variant="Bold"
-                    onClick={() => setHideBalance(!hideBalance)}
-                  />
-                ) : (
-                  <Eye
-                    size={25}
-                    color={Colors.white}
-                    variant="Bold"
-                    onClick={() => setHideBalance(!hideBalance)}
-                  />
-                )}
-              </div>
-            </div>
-            <button className="border border-white py-2 px-4 rounded-lg text-white flex items-center gap-1 justify-start w-fit hover:bg-white/20 transition-colors">
-              <TransmitSqaure2
-                size={25}
-                color={Colors.white}
-                variant="Bold"
-              />{" "}
-              Withdraw
-            </button>
-          </div>
-
-          <div className="bg-primary p-5">
-            <StyledText
-              type="body"
-              color={"white"}
-              variant="semibold"
-            >
-              Your virtual account details
-            </StyledText>
-            <StyledText
-              type="label"
-              color={"white"}
-            >
-              Fund your wallet with the account details below
-            </StyledText>
-            <div className="flex items-center justify-between rounded-lg p-2 border border-light-primary text-white mt-5">
-              <div className="flex flex-col gap-1/2 p-1">
-                <h3>
-                  Bank Name:{" "}
-                  <span className="font-semibold">{`${virtualAccounts[0]?.virtualAccountBankName} (${virtualAccounts[0]?.virtualAccountCurrency})`}</span>
-                </h3>
-                <p>
-                  Account Number:{" "}
-                  <span className="font-semibold">
-                    {virtualAccounts[0]?.virtualAccountNo}
-                  </span>
-                </p>
-                <h4 className="">
-                  Account Holder:{" "}
-                  <span className="font-semibold">
-                    {virtualAccounts[0]?.virtualAccountName}
-                  </span>
-                </h4>
-              </div>
-              {copied ? (
-                <CopySuccess
+        {/* Desktop Balance Display */}
+        <div className="hidden rounded-xl overflow-hidden md:grid md:grid-cols-2">
+          {/* Wallet Balance Card */}
+          <BalanceCard
+            title="Wallet Balance"
+            balance={userBalance}
+            hideBalance={hideBalance}
+            onToggleHide={toggleHideBalance}
+          >
+            <div className="flex gap-4 items-center">
+              <button
+                onClick={() => toggleDepositModal(true)}
+                className="border border-white py-2 px-4 rounded-lg text-white flex items-center gap-1 justify-start w-fit hover:bg-white/20 transition-colors"
+              >
+                <ReceiveSquare2
                   size={25}
-                  color={Colors.lightPrimary}
+                  color={Colors.white}
+                  variant="Bold"
+                />{" "}
+                Deposit
+              </button>
+              <button className="border border-white py-2 px-4 rounded-lg text-white flex items-center gap-1 justify-start w-fit hover:bg-white/20 transition-colors">
+                <TransmitSqaure2
+                  size={25}
+                  color={Colors.primary}
+                  variant="Bold"
+                />{" "}
+                Withdraw
+              </button>
+            </div>
+          </BalanceCard>
+
+          {/* Portfolio Balance Card */}
+          <div className="bg-primary p-5">
+            <div className="flex items-center gap-2">
+              <EmptyWallet
+                variant="Bold"
+                size={15}
+                color={Colors.white}
+              />
+              <StyledText
+                color={Colors.white}
+                type="label"
+              >
+                Portfolio Balance
+              </StyledText>
+            </div>
+
+            <div className="flex items-center justify-between mb-[40px] mt-[15px]">
+              <StyledText
+                type="heading"
+                variant="semibold"
+                color={Colors.white}
+              >
+                {hideBalance
+                  ? "₦*******"
+                  : amountFormatter.format(portfolioData.portfolioBalance)}
+              </StyledText>
+              {hideBalance ? (
+                <EyeSlash
+                  size={25}
+                  color={Colors.white}
+                  variant="Bold"
+                  onClick={toggleHideBalance}
                 />
               ) : (
-                <Copy
+                <Eye
                   size={25}
-                  color={Colors.lightPrimary}
-                  onClick={() =>
-                    handleCopy(virtualAccounts[0]?.virtualAccountNo)
-                  }
+                  color={Colors.white}
+                  variant="Bold"
+                  onClick={toggleHideBalance}
                 />
               )}
             </div>
+
+            <button
+              onClick={() => navigate("/portfolio")}
+              className="w-full border border-white py-2 px-4 rounded-lg text-white flex items-center gap-1 justify-center hover:bg-white/20 transition-colors"
+            >
+              <Briefcase
+                variant="Bold"
+                color={Colors.white}
+                size={25}
+              />
+              View Portfolio
+            </button>
           </div>
         </div>
 
+        {/* Quick Access Section */}
         <ContentBox
           backgroundColor={Colors.white}
           style={{ marginTop: "35px" }}
-          className={"w-[100%]"}
+          className="w-full"
         >
           <div className="flex items-center gap-2 mb-7">
             <Flash
@@ -323,88 +368,17 @@ const HomeScreen = () => {
             />
             <StyledText color={Colors.primary}>Quick Access</StyledText>
           </div>
-          <div className="grid gap-[15px] md:grid-cols-2">
-            <SmallContentBox
-              icon={
-                <StatusUp
-                  variant="Bold"
-                  size={35}
-                  color={Colors.secondary}
-                />
-              }
-              title="Mutual Funds"
-              subtitle="Grow your wealth with diverse investment options"
-              navigateTo="/invest/mutual_fund"
-              navigate={navigate}
-            />
-
-            <SmallContentBox
-              icon={
-                <StatusUp
-                  variant="Bold"
-                  size={35}
-                  color={Colors.secondary}
-                />
-              }
-              title="Fixed Income"
-              subtitle="Enjoy stable returns with predictable income."
-              navigateTo="/invest/fixed_income"
-              navigate={navigate}
-            />
-
-            <SmallContentBox
-              icon={
-                <FavoriteChart
-                  variant="Bold"
-                  size={35}
-                  color={Colors.secondary}
-                />
-              }
-              title="My Portfolio"
-              subtitle="Track and manage your investment holdings"
-              navigateTo="/portfolio"
-              navigate={navigate}
-            />
-
-            <SmallContentBox
-              icon={
-                <ReceiptText
-                  variant="Bold"
-                  size={35}
-                  color={Colors.secondary}
-                />
-              }
-              title="My Transactions"
-              subtitle="View your account activity and financial history."
-              navigateTo="/transactions"
-              navigate={navigate}
-            />
-
-            <SmallContentBox
-              icon={
-                <Reserve
-                  variant="Bold"
-                  size={35}
-                  color={Colors.secondary}
-                />
-              }
-              title="Help Desk"
-              subtitle="Get help from excellent customer care service"
-              navigateTo="/help"
-              navigate={navigate}
-            />
-          </div>
+          <QuickAccessItems navigate={navigate} />
         </ContentBox>
       </div>
+
+      {/* Virtual Accounts Modal */}
       <AppModal
         isOpen={isDepositModalOpen}
-        onClose={() => {
-          setIsDepositModalOpen(false);
-          setCopied(false);
-        }}
-        title={"Virtual Accounts"}
+        onClose={() => toggleDepositModal(false)}
+        title="Virtual Accounts"
       >
-        <div className="">
+        <div>
           <Bank
             size={50}
             color={Colors.primary}
@@ -412,34 +386,13 @@ const HomeScreen = () => {
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-[10px]">
             {virtualAccounts?.length > 0 &&
-              virtualAccounts?.map((account, index) => (
-                <div
+              virtualAccounts.map((account, index) => (
+                <VirtualAccountItem
                   key={index}
-                  className="flex items-center justify-between rounded-lg p-2 hover:bg-border"
-                >
-                  <div>
-                    <h3 className="font-semibold">
-                      {`${account?.virtualAccountBankName} (${account?.virtualAccountCurrency})` ||
-                        "UTLAM Bank(NGN)"}{" "}
-                    </h3>
-                    <p>{account?.virtualAccountNo}</p>
-                    <h4 className="font-medium">
-                      {account?.virtualAccountName}
-                    </h4>
-                  </div>
-                  {copied ? (
-                    <CopySuccess
-                      size={25}
-                      color={Colors.primary}
-                    />
-                  ) : (
-                    <Copy
-                      size={25}
-                      color={Colors.primary}
-                      onClick={() => handleCopy(account?.virtualAccountNo)}
-                    />
-                  )}
-                </div>
+                  account={account}
+                  copied={copied}
+                  onCopy={handleCopy}
+                />
               ))}
           </div>
         </div>

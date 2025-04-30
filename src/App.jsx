@@ -41,6 +41,8 @@ import {
   AuthProvider,
 } from "./context/AuthProvider";
 import Referral from "./screens/Referral";
+import BreadCrumbs from "./components/BreadCrumbs";
+import RegisterExistingUser from "./screens/RegisterExistingUser";
 
 const Layout = () => {
   return (
@@ -58,6 +60,7 @@ const Layout = () => {
         <ResponsiveSidebar />
         <main className="overflow-y-auto w-full bg-gray-50 ">
           <div className="px-5 py-8 w-full flex-1 mx-auto md:max-w-[800px] lg:max-w-[980px] md:py-20">
+            <BreadCrumbs />
             <Outlet />
           </div>
         </main>
@@ -79,10 +82,6 @@ function App() {
             <Route
               index
               element={<HomeScreen />}
-            />
-            <Route
-              path="invest"
-              element={<Invest />}
             />
             <Route
               path="portfolio"
@@ -142,12 +141,12 @@ function App() {
             />
 
             <Route
-              path="/kyc/1"
+              path="/profile/kyc"
               element={<KYC_1 />}
             />
 
             <Route
-              path="/change-password"
+              path="/profile/change-password"
               element={<ChangePassword />}
             />
 
@@ -162,6 +161,17 @@ function App() {
             element={
               <PublicRoute>
                 <Login />
+              </PublicRoute>
+            }
+            replace
+          />
+
+          <Route
+            index
+            path="existing-user-registration"
+            element={
+              <PublicRoute>
+                <RegisterExistingUser />
               </PublicRoute>
             }
             replace

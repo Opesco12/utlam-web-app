@@ -58,7 +58,6 @@ const ResponsiveSidebar = () => {
     navigate("/login");
   };
 
-  // Menu items configuration with paths
   const menuItems = [
     {
       icon: (
@@ -68,7 +67,7 @@ const ResponsiveSidebar = () => {
           size={25}
         />
       ),
-      text: "Home",
+      text: "Dashboard",
       path: "/",
     },
     {

@@ -88,6 +88,10 @@ const PersonalInfoForm = ({ userData, onSubmit, maritalStatusOptions }) => {
     phoneNumber: userData?.mobileNumber || "",
     maritalStatus: userData?.maritalStatus || "",
     placeOfBirth: userData?.placeOfBirth || "",
+    nationality: "",
+    occupation: "",
+    religion: "",
+    mothersMaidenName: "",
   };
 
   return (
@@ -127,18 +131,37 @@ const PersonalInfoForm = ({ userData, onSubmit, maritalStatusOptions }) => {
               name="maritalStatus"
               label={"Marital Status"}
               options={maritalStatusOptions}
-              disabled={
-                userData?.maritalStatus !== null &&
-                userData?.maritalStatus !== ""
-              }
+              disabled={userData?.maritalStatus !== null}
             />
 
             <TextField
               name="placeOfBirth"
               label={"Place of Birth"}
-              disabled={
-                userData?.placeOfBirth !== null && userData?.placeOfBirth !== ""
-              }
+              disabled={userData?.placeOfBirth !== null}
+            />
+
+            <TextField
+              name="nationality"
+              label={"Nationality"}
+              disabled={userData?.nationality !== null}
+            />
+
+            <TextField
+              name="occupation"
+              label={"Occupation"}
+              disabled={userData?.occupation !== null}
+            />
+
+            <TextField
+              name="religion"
+              label={"Religion"}
+              disabled={userData?.religion !== null}
+            />
+
+            <TextField
+              name="mothersMaidenName"
+              label={"Mothers Maiden Name"}
+              disabled={userData?.mothersMaidenName !== null}
             />
 
             <div className="mt-6">
@@ -296,15 +319,18 @@ const PersonalDetails = () => {
   const fetchData = async () => {
     try {
       const clientInfo = await getClientInfo();
-      const { firstname, surname, mobileNumber, maritalStatus, placeOfBirth } =
-        clientInfo;
-      setUserData({
-        firstname,
-        surname,
-        mobileNumber,
-        maritalStatus,
-        placeOfBirth,
-      });
+      // const { firstname, surname, mobileNumber, maritalStatus, placeOfBirth } =
+      //   clientInfo;
+      // setUserData({
+      //   firstname,
+      //   surname,
+      //   mobileNumber,
+      //   maritalStatus,
+      //   placeOfBirth,
+
+      // });
+      console.log(clientInfo);
+      setUserData(clientInfo);
 
       console.log("Client info: ", clientInfo);
 

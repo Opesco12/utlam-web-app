@@ -127,7 +127,7 @@ const Profile = () => {
         />
       ),
       title: "KYC",
-      path: "/kyc/1",
+      path: "/profile/kyc",
     },
     {
       icon: (
@@ -147,7 +147,7 @@ const Profile = () => {
         />
       ),
       title: "Change Password",
-      path: "/change-password",
+      path: "/profile/change-password",
     },
     {
       icon: (

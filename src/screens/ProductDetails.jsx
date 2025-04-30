@@ -232,7 +232,7 @@ const ProductDetails = () => {
                     detail={amountFormatter.format(product.minimumInvestment)}
                   />
                 </div>
-                <hr className="border-gray-400" />
+                <hr className="border-gray-300" />
                 <div className="gap-5 flex">
                   <Details
                     icon={
