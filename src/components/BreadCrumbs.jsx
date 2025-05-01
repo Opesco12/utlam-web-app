@@ -23,9 +23,9 @@ const sidebarRoutes = [
   "",
   "/invest/mutual_fund",
   "/invest/fixed_income",
-  "portfolio",
-  "profile",
-  "transactions",
+  "/portfolio",
+  "/profile",
+  "/transactions",
 ];
 
 const BreadcrumbItem = ({ label, to, isLast, onClick }) => {
