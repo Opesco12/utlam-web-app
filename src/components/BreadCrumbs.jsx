@@ -13,7 +13,7 @@ const routeNameMap = {
   "personal-details": "Personal Details",
   "bank-details": "Bank Details",
   referral: "Referral",
-  "kyc/1": "KYC",
+  kyc: "KYC",
   "change-password": "Change Password",
   statement: "Statement",
   withdraw: "Withdraw",

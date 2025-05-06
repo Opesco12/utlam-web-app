@@ -66,7 +66,6 @@ const SelectField = ({ label, options, ...props }) => {
   );
 };
 
-// Tab component for switching between views
 const Tab = ({ active, onClick, children }) => {
   return (
     <button
@@ -80,18 +79,23 @@ const Tab = ({ active, onClick, children }) => {
   );
 };
 
-// Personal Information Form Component
-const PersonalInfoForm = ({ userData, onSubmit, maritalStatusOptions }) => {
+const PersonalInfoForm = ({
+  userData,
+  onSubmit,
+  maritalStatusOptions,
+  titleOptions,
+}) => {
   const initialValues = {
     firstname: userData?.firstname || "",
     surname: userData?.surname || "",
     phoneNumber: userData?.mobileNumber || "",
     maritalStatus: userData?.maritalStatus || "",
+    titleCode: userData?.titleCode || "",
     placeOfBirth: userData?.placeOfBirth || "",
-    nationality: "",
-    occupation: "",
-    religion: "",
-    mothersMaidenName: "",
+    // nationality: "",
+    occupation: userData?.occupation || "",
+    religion: userData?.religion || "",
+    mothersMaidenName: userData?.mothersMaidenName || "",
   };
 
   return (
@@ -134,17 +138,24 @@ const PersonalInfoForm = ({ userData, onSubmit, maritalStatusOptions }) => {
               disabled={userData?.maritalStatus !== null}
             />
 
+            <SelectField
+              name="titleCode"
+              label={"Title"}
+              options={titleOptions}
+              disabled={userData?.titleCode !== null}
+            />
+
             <TextField
               name="placeOfBirth"
               label={"Place of Birth"}
               disabled={userData?.placeOfBirth !== null}
             />
 
-            <TextField
+            {/* <TextField
               name="nationality"
               label={"Nationality"}
               disabled={userData?.nationality !== null}
-            />
+            /> */}
 
             <TextField
               name="occupation"
@@ -309,30 +320,40 @@ const PersonalDetails = () => {
   const maritalStatusOptions = [
     {
       label: "Single",
-      value: "s",
+      value: "S",
     },
-    { label: "Married", value: "m" },
-    { label: "Divorced", value: "d" },
-    { label: "Widowed", value: "w" },
+    { label: "Married", value: "M" },
+    { label: "Divorced", value: "D" },
+    { label: "Other", value: "O" },
+  ];
+
+  const titleOptions = [
+    {
+      transId: 4,
+      value: "Chief",
+      label: "Chief",
+    },
+    {
+      transId: 1,
+      value: "Miss",
+      label: "Miss",
+    },
+    {
+      transId: 2,
+      value: "Mr",
+      label: "Mr",
+    },
+    {
+      transId: 3,
+      value: "Mrs",
+      label: "Mrs",
+    },
   ];
 
   const fetchData = async () => {
     try {
       const clientInfo = await getClientInfo();
-      // const { firstname, surname, mobileNumber, maritalStatus, placeOfBirth } =
-      //   clientInfo;
-      // setUserData({
-      //   firstname,
-      //   surname,
-      //   mobileNumber,
-      //   maritalStatus,
-      //   placeOfBirth,
-
-      // });
-      console.log(clientInfo);
       setUserData(clientInfo);
-
-      console.log("Client info: ", clientInfo);
 
       const nextOfKins = await getNextOfKins();
       if (nextOfKins.length > 0) {
@@ -353,25 +374,39 @@ const PersonalDetails = () => {
 
   const handlePersonalInfoSubmit = async (values, { setSubmitting }) => {
     try {
-      const personalInfoData = {
-        ...userData,
-        maritalStatus: values.maritalStatus,
-        placeOfBirth: values.placeOfBirth,
-      };
-
-      const response = await updateClientInfo(personalInfoData);
-      console.log("response: ", response);
-
-      if (response !== undefined) {
-        setLoading(true);
-        fetchData();
-        toast.success("Personal information updated successfully");
+      const transId = titleOptions?.find(
+        (option) => option?.value == values?.titleCode
+      );
+      const data = await updateClientInfo({
+        // transId: 0,
+        clientType: userData?.clientType,
+        clientGroupId: userData?.clientGroupId,
+        surname: userData?.surname,
+        firstname: userData?.firstname,
+        othernames: userData?.othernames,
+        dateOfBirth: userData?.dateOfBirth,
+        emailAddress: userData?.emailAddress,
+        address1: userData?.address1,
+        address2: userData?.address2,
+        city: userData?.city,
+        state: userData?.state,
+        country: userData?.country,
+        zipcode: userData?.zipcode,
+        mobileNumber: userData?.mobileNumber,
+        gender: userData?.gender,
+        titleCode: values?.titleCode,
+        maritalStatus: values?.maritalStatus,
+        // nationality: userData?.country,
+        occupation: values?.occupation,
+        religion: values?.religion,
+        mothersMaidenName: values?.mothersMaidenName,
+        placeOfBirth: values?.placeOfBirth,
+      });
+      if (data) {
+        toast.success("Personal Information Updated Successfully");
       }
     } catch (error) {
-      toast.error("Failed to update personal information");
       console.error(error);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -463,6 +498,7 @@ const PersonalDetails = () => {
               userData={userData}
               onSubmit={handlePersonalInfoSubmit}
               maritalStatusOptions={maritalStatusOptions}
+              titleOptions={titleOptions}
             />
           )}
 

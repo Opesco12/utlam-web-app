@@ -495,7 +495,12 @@ const Register = () => {
                       >
                         By signing up, you agree to the{" "}
                         <span className="text-primary">
-                          Terms of Use & Privacy Policy
+                          <a
+                            href="https://utlam.com/privacy-policy/"
+                            target="_blank"
+                          >
+                            Terms of Use & Privacy Policy
+                          </a>
                         </span>
                       </StyledText>
                     </>

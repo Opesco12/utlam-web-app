@@ -37,4 +37,5 @@ export const endpoints = {
   getClientPhoto: "/getclientphoto",
   uploadClientPhoto: "/uploadclientphoto",
   UpdateClientInfo: "/updateindividualclientaccountinfo",
+  getTitles: "/gettitles",
 };

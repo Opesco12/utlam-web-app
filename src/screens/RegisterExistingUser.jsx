@@ -54,7 +54,7 @@ const RegisterExistingUser = () => {
             </div>
             <Formik
               initialValues={{ accountNumber: "", email: "", password: "" }}
-              validationSchema={userRegisterSchema}
+              validationSchema={existingUserRegistrationSchema}
               onSubmit={async (values, { setSubmitting }) => {
                 setSubmitting(true);
                 const { email, password, accountNumber } = values;
@@ -66,7 +66,6 @@ const RegisterExistingUser = () => {
                   });
 
                   if (userData) {
-                    ss;
                     console.log(userData);
                     if (
                       userData.message ===

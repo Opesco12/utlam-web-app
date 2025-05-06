@@ -64,7 +64,7 @@ const apiCall = async ({
       method,
       url: endpoint,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json-patch+json",
       },
       ...customConfig,
     };
@@ -177,7 +177,6 @@ export const getClientInfo = async () => {
 };
 
 export const updateClientInfo = async (info) => {
-  console.log(info);
   try {
     const data = await apiCall({
       endpoint: endpoints.UpdateClientInfo,
@@ -186,6 +185,7 @@ export const updateClientInfo = async (info) => {
     });
     return data;
   } catch (error) {
+    console.error(error);
     toast.error("An error occured");
   }
 };
@@ -629,6 +629,19 @@ export const getFixedIcomeOnlineBalances = async (portfolioId) => {
       toast.error("Unable to fetch fixed income balances");
     }
     return null;
+  }
+};
+
+export const getTitles = async () => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.getTitles,
+      method: "GET",
+    });
+    return data;
+  } catch (error) {
+    if (error) {
+    }
   }
 };
 
