@@ -769,6 +769,7 @@ export const getClientBankAccounts = async () => {
 };
 
 export const debitWallet = async (requestData) => {
+  console.log("Withdrawal request data: ", requestData);
   try {
     const data = await apiCall({
       endpoint: endpoints.withdraw,

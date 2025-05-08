@@ -23,6 +23,7 @@ import {
   RegisterStep2ValidationSchema,
 } from "../validationSchemas/userSchema";
 import StepIndicator from "../components/StepIndicator";
+import SmileIDKYC from "../components/SmileIdKYC";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -140,6 +141,7 @@ const Register = () => {
   };
 
   const configureSmileIdentityWebIntegration = (token) => {
+    if (window.SmileIdentity) console.log("It is availble");
     window.SmileIdentity({
       token,
       product: "biometric_kyc",
@@ -223,6 +225,8 @@ const Register = () => {
         })}
       ></smart-camera-web> */}
       {/* <p id="smile-id-button">start kyc</p> */}
+
+      {/* <SmileIDKYC userEmail={"oyelekemmanuel@gmail.com"} /> */}
 
       <div className="grid md:grid-cols-2">
         <div className="bg-primary h-screen hidden md:block">

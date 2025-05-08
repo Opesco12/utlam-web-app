@@ -11,6 +11,7 @@ import {
 } from "iconsax-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Field, Formik, Form } from "formik";
 
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
@@ -22,6 +23,7 @@ import AppModal from "../components/AppModal";
 import QuickAccessItems from "../components/QuickAccess";
 import VirtualAccountItem from "../components/VirtualAccountItem";
 import BalanceCard from "../components/BalanceCard";
+import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 
 import {
   getVirtualAccounts,
@@ -29,6 +31,8 @@ import {
   getProducts,
   getMutualFundOnlineBalances,
   getFixedIcomeOnlineBalances,
+  getClientBankAccounts,
+  debitWallet,
 } from "../api";
 import { amountFormatter } from "../helperFunctions/amountFormatter";
 import { userStorage } from "../storage/userStorage";
@@ -36,11 +40,13 @@ import { keys } from "../storage/kyes";
 
 const HomeScreen = () => {
   const [loading, setLoading] = useState(true);
-  const [userBalance, setUserBalance] = useState(0);
+  const [userBalance, setUserBalance] = useState(null);
   const [name, setName] = useState(null);
   const [hideBalance, setHideBalance] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
   const [virtualAccounts, setVirtualAccounts] = useState([]);
+  const [clientBanks, setClientBanks] = useState([]);
   const [copied, setCopied] = useState(false);
   const [portfolioData, setPortfolioData] = useState({
     mutualFundBalances: [],
@@ -68,24 +74,23 @@ const HomeScreen = () => {
     }
   };
 
-  // Fetch user data and wallet balance
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
 
       try {
-        // Get virtual accounts
         const accounts = await getVirtualAccounts();
         if (accounts) setVirtualAccounts(accounts);
 
-        // Get user data
+        const clientBanks = await getClientBankAccounts();
+        if (clientBanks) setClientBanks(clientBanks);
+
         const userData = userStorage.getItem(keys.user);
         setName(userData?.fullName);
 
-        // Get wallet balance
         const data = await getWalletBalance();
         if (data) {
-          setUserBalance(data[0]?.amount);
+          setUserBalance(data[0]);
         } else {
           toast.error("Unable to fetch wallet balance");
         }
@@ -100,18 +105,14 @@ const HomeScreen = () => {
     fetchUserData();
   }, []);
 
-  // Fetch portfolio data
   useEffect(() => {
     const fetchPortfolioData = async () => {
       try {
-        // Get mutual fund balances
         const mutualFundBalances = await getMutualFundOnlineBalances();
 
-        // Get investible products
         const investibleProducts = await getProducts();
 
         if (investibleProducts) {
-          // Process fixed income portfolios
           const fixedIncomePortfolios = await Promise.all(
             investibleProducts
               .filter((product) => product.portfolioType === 9)
@@ -150,20 +151,17 @@ const HomeScreen = () => {
     fetchPortfolioData();
   }, []);
 
-  // Calculate portfolio balance
   useEffect(() => {
     const { mutualFundBalances, fixedIncomePortfolio } = portfolioData;
 
     let totalBalance = 0;
 
-    // Add fixed income values
     fixedIncomePortfolio.forEach((portfolio) => {
       portfolio.investments?.forEach((investment) => {
         totalBalance += investment?.currentValue || 0;
       });
     });
 
-    // Add mutual fund values
     mutualFundBalances?.forEach((investment) => {
       totalBalance += investment?.balance || 0;
     });
@@ -173,6 +171,29 @@ const HomeScreen = () => {
       portfolioBalance: totalBalance,
     }));
   }, [portfolioData.mutualFundBalances, portfolioData.fixedIncomePortfolio]);
+
+  const handleWithdrawal = async (amount) => {
+    if (clientBanks?.length === 0) {
+      toast.error("Please add a bank account in the profile page.");
+      setIsSubmitting(false);
+    } else {
+      if (amount > userBalance?.amount) {
+        toast.error("Insufficient Balance");
+        setIsSubmitting(false);
+      } else {
+        const requestData = {
+          currencyCode: "NGN",
+          amount: amount,
+          walletBankAccountNo: userBalance?.walletAccountNo,
+          beneficiaryBankAccountNo: clientBanks[0]?.beneficiaryAccountNo,
+        };
+        const response = await debitWallet(requestData);
+        if (response) {
+          toast.success("Withdrawal Successful");
+        }
+      }
+    }
+  };
 
   // Loading state
   if (loading) {
@@ -217,7 +238,9 @@ const HomeScreen = () => {
               variant="semibold"
               color={Colors.white}
             >
-              {hideBalance ? "₦*******" : amountFormatter.format(userBalance)}
+              {hideBalance
+                ? "₦*******"
+                : amountFormatter.format(userBalance?.amount)}
             </StyledText>
             {hideBalance ? (
               <EyeSlash
@@ -238,7 +261,7 @@ const HomeScreen = () => {
 
           <div className="flex flex-row justify-between">
             <div
-              className="w-[48%]"
+              className="w-[48%] cursor-pointer"
               onClick={() => toggleDepositModal(true)}
             >
               <AppRippleButton backgroundColor={Colors.lightPrimary}>
@@ -251,26 +274,26 @@ const HomeScreen = () => {
               </AppRippleButton>
             </div>
 
-            <AppRippleButton
-              backgroundColor={Colors.white}
-              width="48%"
+            <div
+              className="w-[48%] cursor-pointer"
+              onClick={() => setIsWithdrawalModalOpen(true)}
             >
-              <TransmitSqaure2
-                size={25}
-                color={Colors.primary}
-                variant="Bold"
-              />
-              <StyledText variant="medium">Withdraw</StyledText>
-            </AppRippleButton>
+              <AppRippleButton backgroundColor={Colors.white}>
+                <TransmitSqaure2
+                  size={25}
+                  color={Colors.primary}
+                  variant="Bold"
+                />
+                <StyledText variant="medium">Withdraw</StyledText>
+              </AppRippleButton>
+            </div>
           </div>
         </ContentBox>
 
-        {/* Desktop Balance Display */}
         <div className="hidden rounded-xl overflow-hidden md:grid md:grid-cols-2">
-          {/* Wallet Balance Card */}
           <BalanceCard
             title="Wallet Balance"
-            balance={userBalance}
+            balance={userBalance?.amount}
             hideBalance={hideBalance}
             onToggleHide={toggleHideBalance}
           >
@@ -286,7 +309,10 @@ const HomeScreen = () => {
                 />{" "}
                 Deposit
               </button>
-              <button className="border border-white py-2 px-4 rounded-lg text-white flex items-center gap-1 justify-start w-fit hover:bg-white/20 transition-colors">
+              <button
+                onClick={() => setIsWithdrawalModalOpen(true)}
+                className="border border-white py-2 px-4 rounded-lg text-white flex items-center gap-1 justify-start w-fit hover:bg-white/20 transition-colors"
+              >
                 <TransmitSqaure2
                   size={25}
                   color={Colors.primary}
@@ -297,7 +323,6 @@ const HomeScreen = () => {
             </div>
           </BalanceCard>
 
-          {/* Portfolio Balance Card */}
           <div className="bg-primary p-5">
             <div className="flex items-center gap-2">
               <EmptyWallet
@@ -395,6 +420,87 @@ const HomeScreen = () => {
                 />
               ))}
           </div>
+        </div>
+      </AppModal>
+
+      <AppModal
+        isOpen={isWithdrawalModalOpen}
+        onClose={() => setIsWithdrawalModalOpen(false)}
+        title={"Withdraw Funds"}
+      >
+        <div>
+          <Formik
+            enableReinitialize={true}
+            initialValues={{
+              amount: 0,
+              bankName: clientBanks[0]?.bankName,
+              accountNo: clientBanks[0]?.beneficiaryAccountNo,
+            }}
+            onSubmit={(values, { setSubmitting }) => {
+              console.log(values);
+              const { amount } = values;
+              setSubmitting(true);
+              handleWithdrawal(amount);
+              setSubmitting(false);
+            }}
+          >
+            {({ handleSubmit, isSubmitting, values, setSubmitting }) => (
+              <Form onSubmit={handleSubmit}>
+                <div>
+                  <label htmlFor="amount">Amount</label>
+
+                  <Field
+                    id="amount"
+                    name="amount"
+                    // value={
+                    //   values.amount === 0 || values.amount === ""
+                    //     ? 0
+                    //     : amountFormatter.format(values.amount)
+                    // }
+                    type="text"
+                    inputMode="numeric"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="bankName">Bank Name</label>
+
+                  <Field
+                    id="bankName"
+                    name="bankName"
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    disabled
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="accountNo">Account Number</label>
+
+                  <Field
+                    id="accountNo"
+                    name="accountNo"
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    disabled
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-lightPrimary transition-colors mt-5"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <SmallLoadingSpinner color={Colors.white} />
+                  ) : (
+                    "Withdraw"
+                  )}
+                </button>
+              </Form>
+            )}
+          </Formik>
         </div>
       </AppModal>
     </div>
