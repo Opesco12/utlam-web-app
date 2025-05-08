@@ -12,12 +12,11 @@ export const AuthContext = createContext(null);
 
 const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true); // Start with loading true
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
   const getAuthToken = async () => {
     const data = userStorage.getItem(keys.user);
-    console.log(data);
     return data?.token;
   };
 
@@ -42,7 +41,7 @@ const AuthProvider = ({ children }) => {
         const token = await getAuthToken();
 
         if (!token) {
-          console.log("NO token found for auth provider logic");
+          // console.log("NO token found for auth provider logic");
           setIsAuthenticated(false);
           return;
         }

@@ -1,4 +1,3 @@
-// import { toast } from "react-toastify";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -9,7 +8,6 @@ import { history } from "../helperFunctions/navigationHelper";
 
 export const BASE_URL = import.meta.env.VITE_LIVE_BASE_URL;
 
-// Custom authentication error class
 class AuthenticationError extends Error {
   constructor(message = "Authentication required") {
     super(message);
@@ -27,19 +25,15 @@ const axiosInstance = axios.create({
   timeout: 60000,
 });
 
-// Add a response interceptor to handle 401 errors globally
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
       console.log("Unauthorized request detected");
-      // Clear user data
       userStorage.removeItem(keys.user);
-      // Navigate to login page
       if (history && history.navigate) {
         history.navigate("/login", { replace: true });
       } else {
-        // Fallback if history object is not available
         window.location.href = "/login";
       }
       return Promise.reject(new AuthenticationError());
@@ -77,11 +71,9 @@ const apiCall = async ({
       const token = await getAuthToken();
       if (!token) {
         console.log("No auth token found");
-        // Instead of returning JSX, trigger navigation and throw error
         if (history && history.navigate) {
           history.navigate("/login", { replace: true });
         } else {
-          // Fallback if history object is not available
           window.location.href = "/login";
         }
         throw new AuthenticationError();
@@ -94,7 +86,6 @@ const apiCall = async ({
   } catch (error) {
     console.error("API call error:", error);
 
-    // Re-throw the error so it can be caught by the specific API function
     throw error;
   }
 };
@@ -224,6 +215,7 @@ export const createNextOfKin = async (info) => {
 };
 
 export const login = async (username, password) => {
+  console.log(username, password);
   try {
     const data = await apiCall({
       endpoint: endpoints.Login,
@@ -811,7 +803,6 @@ const convertToBase64 = (file) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
-      // Remove the prefix (e.g., "data:image/jpeg;base64,")
       const base64String = reader.result.split(",")[1];
       resolve(base64String);
     };
@@ -820,12 +811,9 @@ const convertToBase64 = (file) => {
 };
 
 export const uploadImage = async (file) => {
-  console.log(file);
   try {
-    // Convert file to base64
     const base64String = await convertToBase64(file);
 
-    // Prepare request body
     const requestBody = {
       base64: base64String,
       filename: file?.name,
@@ -846,5 +834,39 @@ export const uploadImage = async (file) => {
   } catch (error) {
     console.error("Upload error:", error);
     toast.error("Upload failed");
+  }
+};
+export const uploadClientDocument = async (file, documentId, comment) => {
+  try {
+    const formData = new FormData();
+
+    formData.append("Files", file);
+
+    formData.append("DocumentId", documentId);
+
+    if (comment) {
+      formData.append("Comment", comment);
+    }
+
+    const token = await getAuthToken();
+
+    const response = await axios.post(
+      `${BASE_URL}${endpoints.uploadClientDocument}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    console.log("Upload successful:", response.data);
+    toast.success("Document uploaded successfully");
+    return response.data;
+  } catch (error) {
+    console.error("Upload failed: ", error);
+    toast.error("Document upload failed");
+    throw error;
   }
 };

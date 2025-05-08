@@ -1,10 +1,13 @@
 import * as Yup from "yup";
 import { Formik } from "formik";
-import { toast, ToastContainer } from "react-toastify";
+import { Toaster, toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Country, State, City } from "country-state-city";
 import csc from "countries-states-cities";
+// import SmartCameraWeb from "@smileid/web-components/smart-camera-web";
+import "@smileid/web-components/smart-camera-web";
+import axios from "axios";
 
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
@@ -14,100 +17,12 @@ import AppButton from "../components/AppButton";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 
 import { getCountries, registerNewIndividual } from "../api";
-
-// Split validation schemas for each step
-const step1ValidationSchema = Yup.object().shape({
-  firstname: Yup.string()
-    .matches(/^[A-Za-z]+$/, "First name must contain only letters")
-    .min(2, "First name must be at least 2 characters")
-    .max(50, "First name must not exceed 50 characters")
-    .required("First name is required"),
-  lastname: Yup.string()
-    .matches(/^[A-Za-z]+$/, "Last name must contain only letters")
-    .min(2, "Last name must be at least 2 characters")
-    .max(50, "Last name must not exceed 50 characters")
-    .required("Last name is required"),
-  phoneNumber: Yup.string().required("Phone number is required"),
-  email: Yup.string().email("Email is not valid").required("Email is required"),
-  dob: Yup.string().required("Date of Birth is required"),
-  gender: Yup.string().required("Gender is required"),
-  password: Yup.string()
-    .required("Password is required")
-    .min(6, "Password must be at least 6 characters")
-    .matches(
-      /^[A-Za-z\d@$!%*?#&]+$/,
-      "Password can only contain letters, numbers, and @$!%*#?&"
-    )
-    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .matches(/\d/, "Password must contain at least one number")
-    .matches(
-      /[@$!%*?&#]/,
-      "Password must contain at least one special character (@$!%*?&#)"
-    ),
-  confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password"), null], "Passwords must match")
-    .required("Confirm Password is required"),
-});
-
-const step2ValidationSchema = Yup.object().shape({
-  address: Yup.string()
-    .required("Address is required")
-    .min(5, "Address must be at least 5 characters")
-    .max(50, "Address must not exceed 100 characters"),
-  city: Yup.string()
-    .required("City is required")
-    .min(2, "City must be at least 2 characters")
-    .max(50, "City must not exceed 50 characters"),
-  state: Yup.string().required("State is required"),
-  country: Yup.string().required("Country is required"),
-  nin: Yup.string()
-    .required("NIN is required")
-    .matches(/^\d{11}$/, "NIN must be exactly 11 digits"),
-  bvn: Yup.string()
-    .required("BVN is required")
-    .matches(/^\d{11}$/, "BVN must be exactly 11 digits"),
-  referredBy: Yup.string(),
-});
-
-// Step Indicator Component
-const StepIndicator = ({ currentStep }) => {
-  return (
-    <div className="flex justify-center items-center my-6">
-      <div className="flex items-center">
-        {/* Step 1 Circle */}
-        <div
-          className={`flex items-center justify-center w-8 h-8 rounded-full ${
-            currentStep === 1
-              ? "bg-primary text-white"
-              : "bg-primary text-white"
-          }`}
-        >
-          1
-        </div>
-
-        {/* Connecting Line */}
-        <div
-          className="w-16 h-1 mx-2"
-          style={{
-            backgroundColor: currentStep === 2 ? Colors.primary : "#D1D5DB",
-          }}
-        ></div>
-
-        {/* Step 2 Circle */}
-        <div
-          className={`flex items-center justify-center w-8 h-8 rounded-full ${
-            currentStep === 2
-              ? "bg-primary text-white"
-              : "bg-gray-200 text-gray-600"
-          }`}
-        >
-          2
-        </div>
-      </div>
-    </div>
-  );
-};
+import SmileIDCamera from "../components/SmileIdCamera";
+import {
+  RegisterStep1ValidationSchema,
+  RegisterStep2ValidationSchema,
+} from "../validationSchemas/userSchema";
+import StepIndicator from "../components/StepIndicator";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -138,6 +53,8 @@ const Register = () => {
     clientType: 1,
     referredBy: "",
   });
+
+  const [smileToken, setSmileToken] = useState(null);
 
   const genderOptions = [
     { label: "Male", value: "M" },
@@ -196,9 +113,117 @@ const Register = () => {
     setStep(1);
   };
 
+  const getWebToken = async () => {
+    const URL = "http://192.168.1.110:4000/token";
+
+    try {
+      const response = await axios.get(URL, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("Parsed JSON:", response.data);
+
+      setSmileToken(response?.data);
+
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+
+      return response.data;
+    } catch (e) {
+      console.log(`API: ${e.name}, ${e.message}`);
+      throw e;
+    }
+  };
+
+  const configureSmileIdentityWebIntegration = (token) => {
+    window.SmileIdentity({
+      token,
+      product: "biometric_kyc",
+      callback_url: `http://192.168.1.110:4000/callback`,
+      environment: "live",
+      partner_details: {
+        partner_id: `6329`,
+        name: `UTLAM`,
+        logo_url: ``,
+        policy_url: `https://utlam.com/privacy-policy/`,
+        theme_color: Colors.primary,
+      },
+      partner_params: {
+        sample_meta_data: "meta-data-value", //include meta data
+        sandbox_result: "0", //mock sandbox result
+      },
+      onsuccess: handleVerificationSuccess,
+      onerror: handleVerificationError,
+      onclose: handleVerificationClose,
+    });
+  };
+
+  const verifyWithSmileIdentityButton =
+    document.getElementById("smile-id-button");
+
+  useEffect(() => {
+    verifyWithSmileIdentityButton?.addEventListener(
+      "click",
+      async (e) => {
+        e.preventDefault();
+
+        verifyWithSmileIdentityButton.textContent = "Initializing session...";
+        verifyWithSmileIdentityButton.disabled = true;
+
+        try {
+          console.log("It should log this now");
+          const { token } = await getWebToken();
+          console.log("Token gotten from backend is; ", token);
+          configureSmileIdentityWebIntegration(token);
+        } catch (e) {
+          throw e;
+        }
+      },
+      false
+    );
+  }, [verifyWithSmileIdentityButton]);
+
+  const handleVerificationSuccess = async (event) => {
+    const { detail } = event;
+    console.log("SmileID Success:", detail);
+  };
+  const handleVerificationError = (error) => {
+    console.log("an error occured in kyc process");
+    console.log("error that happened is: ", error);
+  };
+
+  const handleVerificationClose = () => {
+    console.log("Trying to close");
+  };
+
   return (
     <div className="w-full h-screen overflow-hidden">
-      <ToastContainer />
+      <Toaster />
+
+      {/* <smart-camera-web
+        id="smile-id-button"
+        // capture-id
+        token={smileToken}
+        product="biometric_kyc"
+        callback-url="https://189zln6v-4000.uks1.devtunnels.ms/callback"
+        environment="sandbox"
+        partner-id="6329"
+        partner-name="UTLAM"
+        policy-url="https://utlam.com/privacy-policy/"
+        theme-color={Colors.primary}
+        partner-params={JSON.stringify({
+          job_id: `job_${Date.now()}`,
+          user_id: `user_${formData.email}`,
+          sample_meta_data: "meta-data-value",
+          sandbox_result: "0",
+        })}
+      ></smart-camera-web> */}
+      {/* <p id="smile-id-button">start kyc</p> */}
+
       <div className="grid md:grid-cols-2">
         <div className="bg-primary h-screen hidden md:block">
           <img
@@ -242,7 +267,7 @@ const Register = () => {
 
               {step === 1 ? (
                 <Formik
-                  validationSchema={step1ValidationSchema}
+                  validationSchema={RegisterStep1ValidationSchema}
                   initialValues={formData}
                   validateOnChange={false}
                   validateOnBlur={false}
@@ -335,7 +360,7 @@ const Register = () => {
                 </Formik>
               ) : (
                 <Formik
-                  validationSchema={step2ValidationSchema}
+                  validationSchema={RegisterStep2ValidationSchema}
                   initialValues={formData}
                   onSubmit={async (values, { setSubmitting }) => {
                     setSubmitting(true);
@@ -422,14 +447,13 @@ const Register = () => {
                         onValueChange={(value) => {
                           setSelectedState(value);
 
-                          // Find the state object to get its name
                           const stateObj = states.find(
                             (state) => state.isoCode === value
                           );
                           if (stateObj) {
                             setSelectedStateName(stateObj.name);
                             setFormData({ ...formData, state: value });
-                            setFieldValue("state", value); // Use the isoCode for the select value
+                            setFieldValue("state", value);
                           }
                         }}
                         label="State"

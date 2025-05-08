@@ -36,6 +36,7 @@ export const endpoints = {
   clientRelationshipManager: "/getclientrelationshipmanager",
   getClientPhoto: "/getclientphoto",
   uploadClientPhoto: "/uploadclientphoto",
+  uploadClientDocument: "/uploadclientdocument",
   UpdateClientInfo: "/updateindividualclientaccountinfo",
   getTitles: "/gettitles",
 };

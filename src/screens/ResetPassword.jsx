@@ -1,17 +1,14 @@
 import { useState } from "react";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { ToastContainer, toast } from "react-toastify";
+import { Toaster, toast } from "sonner";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { TextField, Button } from "@mui/material";
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
 import AppButton from "../components/AppButton";
 import AppTextField from "../components/AppTextField";
 
-import { userLoginSchema } from "../validationSchemas/userSchema";
-import { userStorage } from "../storage/userStorage";
 import { resetPassword, resetPasswordRequest } from "../api";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 
@@ -68,7 +65,7 @@ const ResetPassword = () => {
   });
   return (
     <div className="w-full h-screen">
-      <ToastContainer />
+      <Toaster />
       <div className="grid md:grid-cols-2">
         <div className="bg-primary h-screen hidden md:block">
           <img

@@ -48,7 +48,7 @@ const Layout = () => {
   return (
     <ProtectedRoute>
       <div className="flex flex-col h-screen overflow-hidden  md:flex-row">
-        <div className="bg-gray-50 shadow-xl absolute h-15 w-full z-10 top-0 px-6 hidden md:block">
+        <div className="bg-gray-50 shadow-xl absolute h-15 w-full z-50 top-0 px-6 hidden md:block">
           <div className="h-full flex items-center ">
             <img
               src="/images/logo.svg"
