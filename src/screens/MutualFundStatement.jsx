@@ -76,7 +76,7 @@ export default MutualFundStatement;
 const StatementItem = ({ statement }) => {
   const date = new Date(statement?.transDate).toDateString();
   return (
-    <div className="flex justify-between py-[15px] border-b">
+    <div className="flex justify-between py-[15px] border-b border-gray-300">
       <div className="flex flex-col">
         <StyledText
           variant="semibold"

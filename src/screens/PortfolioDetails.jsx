@@ -75,7 +75,7 @@ const PortfolioDetails = () => {
         {_.upperCase(_.replace(portfolioName, /-/g, " "))}
       </HeaderText>
 
-      <ContentBox>
+      <ContentBox className={"bg-white"}>
         <div
           style={{
             justifyContent: "center",
@@ -84,7 +84,7 @@ const PortfolioDetails = () => {
             flexDirection: "column",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
             <Moneys
               variant="Bold"
               size={25}
@@ -107,7 +107,10 @@ const PortfolioDetails = () => {
           </StyledText>
         </div>
       </ContentBox>
-      <ContentBox style={{ marginTop: "30px" }}>
+      <ContentBox
+        style={{ marginTop: "30px" }}
+        className={"bg-white"}
+      >
         {!product?.portfolioType && (
           <>
             {" "}

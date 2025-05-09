@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Bank,
   Briefcase,
@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Field, Formik, Form } from "formik";
+import * as Yup from "yup";
 
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
@@ -37,171 +38,263 @@ import {
 import { amountFormatter } from "../helperFunctions/amountFormatter";
 import { userStorage } from "../storage/userStorage";
 import { keys } from "../storage/kyes";
+import HomeScreenSkeleton from "../components/skeletons/HomeScreenSkeleton";
 
 const HomeScreen = () => {
-  const [loading, setLoading] = useState(true);
-  const [userBalance, setUserBalance] = useState(null);
-  const [name, setName] = useState(null);
-  const [hideBalance, setHideBalance] = useState(false);
-  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
-  const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
-  const [virtualAccounts, setVirtualAccounts] = useState([]);
-  const [clientBanks, setClientBanks] = useState([]);
-  const [copied, setCopied] = useState(false);
-  const [portfolioData, setPortfolioData] = useState({
-    mutualFundBalances: [],
-    fixedIncomePortfolio: [],
-    portfolioBalance: 0,
+  const [state, setState] = useState({
+    loading: true,
+    userBalance: null,
+    name: null,
+    hideBalance: false,
+    isDepositModalOpen: false,
+    isWithdrawalModalOpen: false,
+    isPinModalOpen: false,
+    withdrawalAmount: 0,
+    virtualAccounts: [],
+    clientBanks: [],
+    copied: false,
+    pin: ["", "", "", ""],
+    isPinSubmitting: false,
+    portfolioData: {
+      mutualFundBalances: [],
+      fixedIncomePortfolio: [],
+      portfolioBalance: 0,
+    },
   });
 
   const navigate = useNavigate();
+  const pinRefs = useRef([]);
 
-  const toggleHideBalance = () => setHideBalance((prev) => !prev);
+  const toggleHideBalance = () =>
+    setState((prev) => ({ ...prev, hideBalance: !prev.hideBalance }));
 
-  const toggleDepositModal = (state) => {
-    setIsDepositModalOpen(state);
-    if (!state) setCopied(false);
-  };
+  const toggleDepositModal = (isOpen) =>
+    setState((prev) => ({
+      ...prev,
+      isDepositModalOpen: isOpen,
+      copied: isOpen ? prev.copied : false,
+    }));
 
   const handleCopy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
+      setState((prev) => ({ ...prev, copied: true }));
       toast.success("Copied");
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setState((prev) => ({ ...prev, copied: false })), 2000);
     } catch (err) {
-      console.error("Failed to copy text: ", err);
+      console.error("Failed to copy text:", err);
+      toast.error("Failed to copy text");
+    }
+  };
+
+  const handlePinChange = (index, value) => {
+    const newValue = value.replace(/[^0-9]/g, "").slice(0, 1);
+    setState((prev) => {
+      const newPin = [...prev.pin];
+      newPin[index] = newValue;
+      return { ...prev, pin: newPin };
+    });
+    if (newValue && index < 3 && pinRefs.current[index + 1]) {
+      pinRefs.current[index + 1].focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace" && index > 0 && !e.target.value) {
+      pinRefs.current[index - 1]?.focus();
     }
   };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      setLoading(true);
+    pinRefs.current = pinRefs.current.slice(0, 4);
+    if (pinRefs.current[0] && state.isPinModalOpen) {
+      pinRefs.current[0].focus();
+    }
+  }, [state.isPinModalOpen]);
 
+  const validateWithdrawal = async (amount, setSubmitting) => {
+    try {
+      if (!state.clientBanks?.length) {
+        toast.error("Please add a bank account in the profile page.");
+        setSubmitting(false);
+        return;
+      }
+
+      if (amount <= 0) {
+        toast.error("Amount must be greater than zero");
+        setSubmitting(false);
+        return;
+      }
+
+      if (amount > state.userBalance?.amount) {
+        toast.error("Insufficient Balance");
+        setSubmitting(false);
+        return;
+      }
+
+      setSubmitting(true);
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second loading
+      setState((prev) => ({
+        ...prev,
+        withdrawalAmount: amount,
+        isWithdrawalModalOpen: false,
+        isPinModalOpen: true,
+      }));
+    } catch (error) {
+      console.error("Withdrawal validation failed:", error);
+      toast.error("Validation failed. Please try again later.");
+      setSubmitting(false);
+    }
+  };
+
+  const handleWithdrawal = async (amount, pinString, setSubmitting) => {
+    try {
+      if (!state.clientBanks?.length) {
+        toast.error("Please add a bank account in the profile page.");
+        setSubmitting(false);
+        return;
+      }
+
+      if (amount > state.userBalance?.amount) {
+        toast.error("Insufficient Balance");
+        setSubmitting(false);
+        return;
+      }
+
+      const requestData = {
+        currencyCode: "NGN",
+        amount,
+        // walletBankAccountNo: state.userBalance?.walletAccountNo,
+        beneficiaryBankAccountNo: state.clientBanks[0]?.beneficiaryAccountNo,
+        transactionPin: Number(pinString),
+      };
+
+      const response = await debitWallet(requestData);
+
+      if (response) {
+        toast.success(
+          "Wallet withdrawal is being processed. Kindly note that withdrawals are processed within 24 hours."
+        );
+        setState((prev) => ({
+          ...prev,
+          isPinModalOpen: false,
+          pin: ["", "", "", ""],
+          withdrawalAmount: 0,
+        }));
+      }
+    } catch (error) {
+      console.error("Withdrawal failed:", error);
+      toast.error("Withdrawal failed. Please try again later.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePinSubmit = async () => {
+    setState((prev) => ({ ...prev, isPinSubmitting: true }));
+    const pinString = state.pin.join("");
+
+    if (pinString.length !== 4) {
+      toast.error("Please enter all 4 digits");
+      setState((prev) => ({ ...prev, isPinSubmitting: false }));
+      return;
+    }
+
+    await handleWithdrawal(state.withdrawalAmount, pinString, (value) =>
+      setState((prev) => ({ ...prev, isPinSubmitting: value }))
+    );
+  };
+
+  const amountValidationSchema = Yup.object().shape({
+    amount: Yup.number()
+      .typeError("Amount must be a number")
+      .positive("Amount must be greater than zero")
+      .required("Amount is required")
+      .test(
+        "maxBalance",
+        "Insufficient Balance",
+        (value) => value <= (state.userBalance?.amount || 0)
+      ),
+  });
+
+  useEffect(() => {
+    const fetchAllData = async () => {
+      setState((prev) => ({ ...prev, loading: true }));
       try {
-        const accounts = await getVirtualAccounts();
-        if (accounts) setVirtualAccounts(accounts);
-
-        const clientBanks = await getClientBankAccounts();
-        if (clientBanks) setClientBanks(clientBanks);
+        const [
+          accounts,
+          clientBanks,
+          walletBalance,
+          mutualFundBalances,
+          investibleProducts,
+        ] = await Promise.all([
+          getVirtualAccounts(),
+          getClientBankAccounts(),
+          getWalletBalance(),
+          getMutualFundOnlineBalances(),
+          getProducts(),
+        ]);
 
         const userData = userStorage.getItem(keys.user);
-        setName(userData?.fullName);
 
-        const data = await getWalletBalance();
-        if (data) {
-          setUserBalance(data[0]);
-        } else {
-          toast.error("Unable to fetch wallet balance");
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        toast.error("An error occurred while fetching your data");
-      } finally {
-        setLoading(false);
-      }
-    };
+        const fixedIncomePortfolio = await Promise.all(
+          investibleProducts
+            ?.filter((product) => product.portfolioType === 9)
+            .map(async (product) => {
+              const fixedIncomeBalances = await getFixedIcomeOnlineBalances(
+                product?.portfolioId
+              );
+              if (fixedIncomeBalances?.length > 0) {
+                return {
+                  portfolio: product.portfolioName,
+                  investments: fixedIncomeBalances,
+                  portfolioType: product.portfolioType,
+                  portfolioId: product.portfolioId,
+                };
+              }
+              return null;
+            }) || []
+        );
 
-    fetchUserData();
-  }, []);
+        const validFixedIncomePortfolio = fixedIncomePortfolio.filter(
+          (item) => item !== null
+        );
 
-  useEffect(() => {
-    const fetchPortfolioData = async () => {
-      try {
-        const mutualFundBalances = await getMutualFundOnlineBalances();
+        let portfolioBalance = 0;
+        validFixedIncomePortfolio.forEach((portfolio) => {
+          portfolio.investments?.forEach((investment) => {
+            portfolioBalance += investment?.currentValue || 0;
+          });
+        });
+        mutualFundBalances?.forEach((investment) => {
+          portfolioBalance += investment?.balance || 0;
+        });
 
-        const investibleProducts = await getProducts();
-
-        if (investibleProducts) {
-          const fixedIncomePortfolios = await Promise.all(
-            investibleProducts
-              .filter((product) => product.portfolioType === 9)
-              .map(async (product) => {
-                const fixedIncomeBalances = await getFixedIcomeOnlineBalances(
-                  product?.portfolioId
-                );
-
-                if (fixedIncomeBalances?.length > 0) {
-                  return {
-                    portfolio: product.portfolioName,
-                    investments: fixedIncomeBalances,
-                    portfolioType: product.portfolioType,
-                    portfolioId: product.portfolioId,
-                  };
-                }
-                return null;
-              })
-          );
-
-          // Update portfolio data
-          setPortfolioData((prev) => ({
-            ...prev,
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          virtualAccounts: accounts || [],
+          clientBanks: clientBanks || [],
+          name: userData?.fullName || "",
+          userBalance: walletBalance?.[0] || null,
+          portfolioData: {
             mutualFundBalances: mutualFundBalances || [],
-            fixedIncomePortfolio: fixedIncomePortfolios.filter(
-              (item) => item !== null
-            ),
-          }));
-        }
+            fixedIncomePortfolio: validFixedIncomePortfolio,
+            portfolioBalance,
+          },
+        }));
       } catch (error) {
-        console.error("Error fetching portfolio data:", error);
-        toast.error("An error occurred while fetching portfolio data");
+        console.error("Error fetching data:", error);
+        toast.error("An error occurred while fetching your data");
+        setState((prev) => ({ ...prev, loading: false }));
       }
     };
 
-    fetchPortfolioData();
+    fetchAllData();
   }, []);
 
-  useEffect(() => {
-    const { mutualFundBalances, fixedIncomePortfolio } = portfolioData;
-
-    let totalBalance = 0;
-
-    fixedIncomePortfolio.forEach((portfolio) => {
-      portfolio.investments?.forEach((investment) => {
-        totalBalance += investment?.currentValue || 0;
-      });
-    });
-
-    mutualFundBalances?.forEach((investment) => {
-      totalBalance += investment?.balance || 0;
-    });
-
-    setPortfolioData((prev) => ({
-      ...prev,
-      portfolioBalance: totalBalance,
-    }));
-  }, [portfolioData.mutualFundBalances, portfolioData.fixedIncomePortfolio]);
-
-  const handleWithdrawal = async (amount) => {
-    if (clientBanks?.length === 0) {
-      toast.error("Please add a bank account in the profile page.");
-      setIsSubmitting(false);
-    } else {
-      if (amount > userBalance?.amount) {
-        toast.error("Insufficient Balance");
-        setIsSubmitting(false);
-      } else {
-        const requestData = {
-          currencyCode: "NGN",
-          amount: amount,
-          walletBankAccountNo: userBalance?.walletAccountNo,
-          beneficiaryBankAccountNo: clientBanks[0]?.beneficiaryAccountNo,
-        };
-        const response = await debitWallet(requestData);
-        if (response) {
-          toast.success("Withdrawal Successful");
-        }
-      }
-    }
-  };
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="h-[100vh] flex items-center justify-center">
-        <LargeLoadingSpinner color={Colors.lightPrimary} />
-      </div>
-    );
+  if (state.loading) {
+    return <HomeScreenSkeleton />;
   }
 
   return (
@@ -214,11 +307,10 @@ const HomeScreen = () => {
         className="mb-4"
         color={Colors.primary}
       >
-        Hello, {name || ""}
+        Hello, {state.name || ""}
       </StyledText>
 
       <div className="flex justify-between flex-wrap flex-col md:flex-col">
-        {/* Mobile Balance Display */}
         <ContentBox
           backgroundColor={Colors.primary}
           className="w-full md:px-[30px] md:hidden"
@@ -238,11 +330,11 @@ const HomeScreen = () => {
               variant="semibold"
               color={Colors.white}
             >
-              {hideBalance
+              {state.hideBalance
                 ? "₦*******"
-                : amountFormatter.format(userBalance?.amount)}
+                : amountFormatter.format(state.userBalance?.amount)}
             </StyledText>
-            {hideBalance ? (
+            {state.hideBalance ? (
               <EyeSlash
                 size={25}
                 color={Colors.white}
@@ -276,7 +368,9 @@ const HomeScreen = () => {
 
             <div
               className="w-[48%] cursor-pointer"
-              onClick={() => setIsWithdrawalModalOpen(true)}
+              onClick={() =>
+                setState((prev) => ({ ...prev, isWithdrawalModalOpen: true }))
+              }
             >
               <AppRippleButton backgroundColor={Colors.white}>
                 <TransmitSqaure2
@@ -293,8 +387,8 @@ const HomeScreen = () => {
         <div className="hidden rounded-xl overflow-hidden md:grid md:grid-cols-2">
           <BalanceCard
             title="Wallet Balance"
-            balance={userBalance?.amount}
-            hideBalance={hideBalance}
+            balance={state.userBalance?.amount}
+            hideBalance={state.hideBalance}
             onToggleHide={toggleHideBalance}
           >
             <div className="flex gap-4 items-center">
@@ -310,7 +404,9 @@ const HomeScreen = () => {
                 Deposit
               </button>
               <button
-                onClick={() => setIsWithdrawalModalOpen(true)}
+                onClick={() =>
+                  setState((prev) => ({ ...prev, isWithdrawalModalOpen: true }))
+                }
                 className="border border-white py-2 px-4 rounded-lg text-white flex items-center gap-1 justify-start w-fit hover:bg-white/20 transition-colors"
               >
                 <TransmitSqaure2
@@ -344,11 +440,13 @@ const HomeScreen = () => {
                 variant="semibold"
                 color={Colors.white}
               >
-                {hideBalance
+                {state.hideBalance
                   ? "₦*******"
-                  : amountFormatter.format(portfolioData.portfolioBalance)}
+                  : amountFormatter.format(
+                      state.portfolioData.portfolioBalance
+                    )}
               </StyledText>
-              {hideBalance ? (
+              {state.hideBalance ? (
                 <EyeSlash
                   size={25}
                   color={Colors.white}
@@ -399,7 +497,7 @@ const HomeScreen = () => {
 
       {/* Virtual Accounts Modal */}
       <AppModal
-        isOpen={isDepositModalOpen}
+        isOpen={state.isDepositModalOpen}
         onClose={() => toggleDepositModal(false)}
         title="Virtual Accounts"
       >
@@ -410,12 +508,12 @@ const HomeScreen = () => {
             className="mx-auto mt-[20px] mb-[35px]"
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-[10px]">
-            {virtualAccounts?.length > 0 &&
-              virtualAccounts.map((account, index) => (
+            {state.virtualAccounts?.length > 0 &&
+              state.virtualAccounts.map((account, index) => (
                 <VirtualAccountItem
                   key={index}
                   account={account}
-                  copied={copied}
+                  copied={state.copied}
                   onCopy={handleCopy}
                 />
               ))}
@@ -423,49 +521,59 @@ const HomeScreen = () => {
         </div>
       </AppModal>
 
+      {/* Withdrawal Modal */}
       <AppModal
-        isOpen={isWithdrawalModalOpen}
-        onClose={() => setIsWithdrawalModalOpen(false)}
-        title={"Withdraw Funds"}
+        isOpen={state.isWithdrawalModalOpen}
+        onClose={() =>
+          setState((prev) => ({ ...prev, isWithdrawalModalOpen: false }))
+        }
+        title="Withdraw Funds"
       >
         <div>
           <Formik
             enableReinitialize={true}
             initialValues={{
               amount: 0,
-              bankName: clientBanks[0]?.bankName,
-              accountNo: clientBanks[0]?.beneficiaryAccountNo,
+              bankName: state.clientBanks[0]?.bankName,
+              accountNo: state.clientBanks[0]?.beneficiaryAccountNo,
             }}
+            validationSchema={amountValidationSchema}
             onSubmit={(values, { setSubmitting }) => {
-              console.log(values);
-              const { amount } = values;
-              setSubmitting(true);
-              handleWithdrawal(amount);
-              setSubmitting(false);
+              validateWithdrawal(values.amount, setSubmitting);
             }}
           >
-            {({ handleSubmit, isSubmitting, values, setSubmitting }) => (
+            {({ handleSubmit, isSubmitting, errors, touched }) => (
               <Form onSubmit={handleSubmit}>
-                <div>
-                  <label htmlFor="amount">Amount</label>
-
+                <div className="mb-4">
+                  <label
+                    htmlFor="amount"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Amount
+                  </label>
                   <Field
                     id="amount"
                     name="amount"
-                    // value={
-                    //   values.amount === 0 || values.amount === ""
-                    //     ? 0
-                    //     : amountFormatter.format(values.amount)
-                    // }
                     type="text"
                     inputMode="numeric"
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    className={`w-full p-2 border border-gray-300 rounded-md ${
+                      errors.amount && touched.amount ? "border-red-500" : ""
+                    }`}
                   />
+                  {errors.amount && touched.amount && (
+                    <div className="text-red-500 text-sm mt-1">
+                      {errors.amount}
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  <label htmlFor="bankName">Bank Name</label>
-
+                <div className="mb-4">
+                  <label
+                    htmlFor="bankName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Bank Name
+                  </label>
                   <Field
                     id="bankName"
                     name="bankName"
@@ -475,9 +583,13 @@ const HomeScreen = () => {
                   />
                 </div>
 
-                <div>
-                  <label htmlFor="accountNo">Account Number</label>
-
+                <div className="mb-4">
+                  <label
+                    htmlFor="accountNo"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Account Number
+                  </label>
                   <Field
                     id="accountNo"
                     name="accountNo"
@@ -501,6 +613,70 @@ const HomeScreen = () => {
               </Form>
             )}
           </Formik>
+        </div>
+      </AppModal>
+
+      {/* PIN Input Modal */}
+      <AppModal
+        isOpen={state.isPinModalOpen}
+        onClose={() =>
+          setState((prev) => ({
+            ...prev,
+            isPinModalOpen: false,
+            pin: ["", "", "", ""],
+          }))
+        }
+        title="Enter Transaction PIN"
+      >
+        <div className="flex flex-col items-center justify-center p-6 max-w-md mx-auto">
+          <div className="w-full mb-8">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Enter PIN
+            </label>
+            <div className="flex justify-center gap-4">
+              {[0, 1, 2, 3].map((index) => (
+                <input
+                  key={`pin-${index}`}
+                  ref={(el) => (pinRefs.current[index] = el)}
+                  type="password"
+                  value={state.pin[index]}
+                  onChange={(e) => handlePinChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, index)}
+                  className="w-12 h-12 text-center text-2xl border-2 border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:outline-none"
+                  maxLength={1}
+                  inputMode="numeric"
+                  disabled={state.isPinSubmitting}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="w-full flex gap-4">
+            <button
+              disabled={state.isPinSubmitting}
+              onClick={() =>
+                setState((prev) => ({
+                  ...prev,
+                  isPinModalOpen: false,
+                  pin: ["", "", "", ""],
+                }))
+              }
+              className="w-full py-3 px-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-md shadow transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={state.isPinSubmitting}
+              onClick={handlePinSubmit}
+              className="w-full py-3 px-4 bg-primary hover:bg-light-primary text-white font-medium rounded-md shadow transition-colors disabled:opacity-50"
+            >
+              {state.isPinSubmitting ? (
+                <SmallLoadingSpinner color={Colors.white} />
+              ) : (
+                "Confirm PIN"
+              )}
+            </button>
+          </div>
         </div>
       </AppModal>
     </div>

@@ -25,11 +25,9 @@ const FixedIncomeWithdrawal = () => {
 
   const investment = location.state.investment;
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const findProduct = async () => {
-    setLoading(true);
-
     if (!investment) {
       navigate("/portfolio");
     }

@@ -769,7 +769,6 @@ export const getClientBankAccounts = async () => {
 };
 
 export const debitWallet = async (requestData) => {
-  console.log("Withdrawal request data: ", requestData);
   try {
     const data = await apiCall({
       endpoint: endpoints.withdraw,
@@ -780,7 +779,11 @@ export const debitWallet = async (requestData) => {
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
       console.error(error);
-      toast.error("An error occurred while processing fund withdrawal");
+      if (error.response.data?.Message === "Incorrect pin") {
+        toast.error("Incorrect pin");
+      } else {
+        toast.error("An error occurred while processing fund withdrawal");
+      }
     }
     return null;
   }
@@ -837,6 +840,19 @@ export const uploadImage = async (file) => {
     toast.error("Upload failed");
   }
 };
+
+export const getPendingDocuments = async () => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.getPendingDocuments,
+      method: "GET",
+    });
+    return data;
+  } catch (error) {
+    console.error(error);
+    toast.error("An error occured while fetching photo");
+  }
+};
 export const uploadClientDocument = async (file, documentId, comment) => {
   try {
     const formData = new FormData();
@@ -862,12 +878,95 @@ export const uploadClientDocument = async (file, documentId, comment) => {
       }
     );
 
-    console.log("Upload successful:", response.data);
     toast.success("Document uploaded successfully");
     return response.data;
   } catch (error) {
     console.error("Upload failed: ", error);
     toast.error("Document upload failed");
     throw error;
+  }
+};
+
+export const hasTransactionPin = async () => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.hasTransactionPin,
+      method: "GET",
+    });
+    return data;
+  } catch (error) {
+    if (!(error instanceof AuthenticationError)) {
+      console.error(error);
+      toast.error("An error occurred");
+    }
+    return null;
+  }
+};
+
+export const createTransactionPin = async (requestData) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.createPin,
+      method: "POST",
+      data: requestData,
+    });
+    return data;
+  } catch (error) {
+    if (!(error instanceof AuthenticationError)) {
+      console.error(error);
+      toast.error("An error occurred");
+    }
+    return null;
+  }
+};
+
+export const changeTransactionPin = async (requestData) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.createPin,
+      method: "POST",
+      data: requestData,
+    });
+    return data;
+  } catch (error) {
+    if (!(error instanceof AuthenticationError)) {
+      console.error(error);
+      toast.error("An error occurred");
+    }
+    return null;
+  }
+};
+
+export const resetTransactionPinRequest = async (username) => {
+  try {
+    const data = await apiCall({
+      endpoint: `${endpoints.resetPinRequest}?username=${username}`,
+      method: "POST",
+    });
+
+    return data;
+  } catch (error) {
+    if (!(error instanceof AuthenticationError)) {
+      console.error(error);
+      toast.error("An error occurred");
+    }
+    return null;
+  }
+};
+
+export const resetTransactionPin = async (requestData) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.resetPin,
+      method: "POST",
+      data: requestData,
+    });
+    return data;
+  } catch (error) {
+    if (!(error instanceof AuthenticationError)) {
+      console.error(error);
+      toast.error("An error occurred");
+    }
+    return null;
   }
 };

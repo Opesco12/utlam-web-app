@@ -43,6 +43,7 @@ import {
 import Referral from "./screens/Referral";
 import BreadCrumbs from "./components/BreadCrumbs";
 import RegisterExistingUser from "./screens/RegisterExistingUser";
+import Pin from "./screens/Pin";
 
 const Layout = () => {
   return (
@@ -148,6 +149,11 @@ function App() {
             <Route
               path="/profile/change-password"
               element={<ChangePassword />}
+            />
+
+            <Route
+              path="/profile/pin"
+              element={<Pin />}
             />
 
             <Route
