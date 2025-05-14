@@ -44,6 +44,7 @@ import Referral from "./screens/Referral";
 import BreadCrumbs from "./components/BreadCrumbs";
 import RegisterExistingUser from "./screens/RegisterExistingUser";
 import Pin from "./screens/Pin";
+import ContactRelationShipManager from "./screens/ContactRelationShipManager";
 
 const Layout = () => {
   return (
@@ -149,6 +150,11 @@ function App() {
             <Route
               path="/profile/change-password"
               element={<ChangePassword />}
+            />
+
+            <Route
+              path="/profile/contact-manager"
+              element={<ContactRelationShipManager />}
             />
 
             <Route

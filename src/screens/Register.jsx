@@ -55,8 +55,6 @@ const Register = () => {
     referredBy: "",
   });
 
-  const [smileToken, setSmileToken] = useState(null);
-
   const genderOptions = [
     { label: "Male", value: "M" },
     { label: "Female", value: "F" },
@@ -114,119 +112,9 @@ const Register = () => {
     setStep(1);
   };
 
-  const getWebToken = async () => {
-    const URL = "http://192.168.1.110:4000/token";
-
-    try {
-      const response = await axios.get(URL, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      });
-
-      console.log("Parsed JSON:", response.data);
-
-      setSmileToken(response?.data);
-
-      if (response.data.error) {
-        throw new Error(response.data.error);
-      }
-
-      return response.data;
-    } catch (e) {
-      console.log(`API: ${e.name}, ${e.message}`);
-      throw e;
-    }
-  };
-
-  const configureSmileIdentityWebIntegration = (token) => {
-    if (window.SmileIdentity) console.log("It is availble");
-    window.SmileIdentity({
-      token,
-      product: "biometric_kyc",
-      callback_url: `http://192.168.1.110:4000/callback`,
-      environment: "live",
-      partner_details: {
-        partner_id: `6329`,
-        name: `UTLAM`,
-        logo_url: ``,
-        policy_url: `https://utlam.com/privacy-policy/`,
-        theme_color: Colors.primary,
-      },
-      partner_params: {
-        sample_meta_data: "meta-data-value", //include meta data
-        sandbox_result: "0", //mock sandbox result
-      },
-      onsuccess: handleVerificationSuccess,
-      onerror: handleVerificationError,
-      onclose: handleVerificationClose,
-    });
-  };
-
-  const verifyWithSmileIdentityButton =
-    document.getElementById("smile-id-button");
-
-  useEffect(() => {
-    verifyWithSmileIdentityButton?.addEventListener(
-      "click",
-      async (e) => {
-        e.preventDefault();
-
-        verifyWithSmileIdentityButton.textContent = "Initializing session...";
-        verifyWithSmileIdentityButton.disabled = true;
-
-        try {
-          console.log("It should log this now");
-          const { token } = await getWebToken();
-          console.log("Token gotten from backend is; ", token);
-          configureSmileIdentityWebIntegration(token);
-        } catch (e) {
-          throw e;
-        }
-      },
-      false
-    );
-  }, [verifyWithSmileIdentityButton]);
-
-  const handleVerificationSuccess = async (event) => {
-    const { detail } = event;
-    console.log("SmileID Success:", detail);
-  };
-  const handleVerificationError = (error) => {
-    console.log("an error occured in kyc process");
-    console.log("error that happened is: ", error);
-  };
-
-  const handleVerificationClose = () => {
-    console.log("Trying to close");
-  };
-
   return (
     <div className="w-full h-screen overflow-hidden">
       <Toaster />
-
-      {/* <smart-camera-web
-        id="smile-id-button"
-        // capture-id
-        token={smileToken}
-        product="biometric_kyc"
-        callback-url="https://189zln6v-4000.uks1.devtunnels.ms/callback"
-        environment="sandbox"
-        partner-id="6329"
-        partner-name="UTLAM"
-        policy-url="https://utlam.com/privacy-policy/"
-        theme-color={Colors.primary}
-        partner-params={JSON.stringify({
-          job_id: `job_${Date.now()}`,
-          user_id: `user_${formData.email}`,
-          sample_meta_data: "meta-data-value",
-          sandbox_result: "0",
-        })}
-      ></smart-camera-web> */}
-      {/* <p id="smile-id-button">start kyc</p> */}
-
-      {/* <SmileIDKYC userEmail={"oyelekemmanuel@gmail.com"} /> */}
 
       <div className="grid md:grid-cols-2">
         <div className="bg-primary h-screen hidden md:block">

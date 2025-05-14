@@ -19,7 +19,7 @@ const StepIndicator = ({ currentStep }) => {
         <div
           className="w-16 h-1 mx-2"
           style={{
-            backgroundColor: currentStep === 2 ? Colors.primary : "#D1D5DB",
+            backgroundColor: currentStep > 2 ? Colors.primary : "#D1D5DB",
           }}
         ></div>
 
@@ -28,10 +28,31 @@ const StepIndicator = ({ currentStep }) => {
           className={`flex items-center justify-center w-8 h-8 rounded-full ${
             currentStep === 2
               ? "bg-primary text-white"
+              : currentStep > 2
+              ? "bg-primary text-white"
               : "bg-gray-200 text-gray-600"
           }`}
         >
           2
+        </div>
+
+        {/* Connecting Line */}
+        <div
+          className="w-16 h-1 mx-2"
+          style={{
+            backgroundColor: currentStep === 3 ? Colors.primary : "#D1D5DB",
+          }}
+        ></div>
+
+        {/* Step 3 Circle */}
+        <div
+          className={`flex items-center justify-center w-8 h-8 rounded-full ${
+            currentStep === 3
+              ? "bg-primary text-white"
+              : "bg-gray-200 text-gray-600"
+          }`}
+        >
+          3
         </div>
       </div>
     </div>

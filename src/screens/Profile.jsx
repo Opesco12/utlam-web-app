@@ -10,6 +10,7 @@ import {
   User,
   Profile2User,
   Key,
+  Message,
 } from "iconsax-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -162,14 +163,15 @@ const Profile = () => {
     },
     {
       icon: (
-        <UserOctagon
+        <Message
           size={25}
           color={Colors.primary}
         />
       ),
       title: "Contact Account Manager",
-      // path: "/contact-manager",
+      path: "/profile/contact-manager",
     },
+
     {
       icon: (
         <Headphone

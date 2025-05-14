@@ -92,7 +92,6 @@ const PersonalInfoForm = ({
     maritalStatus: userData?.maritalStatus || "",
     titleCode: userData?.titleCode || "",
     placeOfBirth: userData?.placeOfBirth || "",
-    // nationality: "",
     occupation: userData?.occupation || "",
     religion: userData?.religion || "",
     mothersMaidenName: userData?.mothersMaidenName || "",
@@ -150,12 +149,6 @@ const PersonalInfoForm = ({
               label={"Place of Birth"}
               disabled={userData?.placeOfBirth !== null}
             />
-
-            {/* <TextField
-              name="nationality"
-              label={"Nationality"}
-              disabled={userData?.nationality !== null}
-            /> */}
 
             <TextField
               name="occupation"
@@ -378,7 +371,6 @@ const PersonalDetails = () => {
         (option) => option?.value == values?.titleCode
       );
       const data = await updateClientInfo({
-        // transId: 0,
         clientType: userData?.clientType,
         clientGroupId: userData?.clientGroupId,
         surname: userData?.surname,

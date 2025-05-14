@@ -131,6 +131,7 @@ export const registerNewIndividual = async (info) => {
 
 export const registerExistingIndividual = async (info) => {
   try {
+    console.log(info);
     const data = await apiCall({
       method: "POST",
       endpoint: endpoints.RegisterExistingIndividual,
@@ -960,6 +961,23 @@ export const resetTransactionPin = async (requestData) => {
       endpoint: endpoints.resetPin,
       method: "POST",
       data: requestData,
+    });
+    return data;
+  } catch (error) {
+    if (!(error instanceof AuthenticationError)) {
+      console.error(error);
+      toast.error("An error occurred");
+    }
+    return null;
+  }
+};
+
+export const sendMessageToClientManager = async (message) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.sendMessageToClientManager,
+      method: "POST",
+      data: message,
     });
     return data;
   } catch (error) {

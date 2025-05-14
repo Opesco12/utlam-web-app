@@ -164,7 +164,6 @@ const HomeScreen = () => {
       const requestData = {
         currencyCode: "NGN",
         amount,
-        // walletBankAccountNo: state.userBalance?.walletAccountNo,
         beneficiaryBankAccountNo: state.clientBanks[0]?.beneficiaryAccountNo,
         transactionPin: Number(pinString),
       };

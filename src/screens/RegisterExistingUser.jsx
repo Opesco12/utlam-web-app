@@ -61,8 +61,8 @@ const RegisterExistingUser = () => {
 
                 try {
                   const userData = await registerExistingIndividual({
+                    accountNo: accountNumber,
                     password,
-                    accountNumber,
                   });
 
                   if (userData) {

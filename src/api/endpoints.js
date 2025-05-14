@@ -45,4 +45,5 @@ export const endpoints = {
   changePin: "/changetransactionpin",
   resetPinRequest: "resettransactionpinrequest",
   resetPin: "resettransactionpin",
+  sendMessageToClientManager: "/sendclientmessagetorelationshipmanager",
 };
