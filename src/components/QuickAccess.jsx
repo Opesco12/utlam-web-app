@@ -1,4 +1,10 @@
-import { StatusUp, FavoriteChart, ReceiptText, Reserve } from "iconsax-react";
+import {
+  StatusUp,
+  FavoriteChart,
+  ReceiptText,
+  Reserve,
+  Calculator,
+} from "iconsax-react";
 
 import SmallContentBox from "./SmallContentBox";
 import { Colors } from "../constants/Colors";
@@ -40,6 +46,18 @@ const QuickAccessItems = ({ navigate }) => {
       title: "My Portfolio",
       subtitle: "Track and manage your investment holdings",
       navigateTo: "/portfolio",
+    },
+    {
+      icon: (
+        <Calculator
+          variant="Bold"
+          size={35}
+          color={Colors.secondary}
+        />
+      ),
+      title: "Investment Simulator",
+      subtitle: "Simulate your investment strategies and outcomes.",
+      navigateTo: "/invest/investment_simulator",
     },
     {
       icon: (

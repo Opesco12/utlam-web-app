@@ -1,28 +1,53 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Formik, Field } from "formik";
+import * as Yup from "yup";
+import { Switch } from "@mui/material";
 
 import HeaderText from "../components/HeaderText";
 import ContentBox from "../components/ContentBox";
+import AppModal from "../components/AppModal";
+import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 import { Colors } from "../constants/Colors";
 
 import { amountFormatter } from "../helperFunctions/amountFormatter";
-import { getLiabilityProducts, getProducts, getTenor } from "../api";
+import {
+  getLiabilityProducts,
+  getProducts,
+  getTenor,
+  mutualFundSubscription,
+  fixedIncomeSubscriptionOrder,
+} from "../api";
+import { toast } from "sonner";
 
 const InvestmentSimulator = () => {
+  const [investibleProducts, setInvestibleProducts] = useState([]);
   const [productOptions, setProductOptions] = useState([]);
   const [tenorOptions, setTenorOptions] = useState([]);
   const [selectedTenorInterestRate, setSelectedTenorInterestRate] =
     useState(null);
+  const [state, setState] = useState({
+    isModalOpen: false,
+    isChecked: false,
+    processingInvestment: false,
+  });
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const data = location?.state;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await getProducts();
+        setInvestibleProducts(data);
         setProductOptions(
           data.map((item) => ({
             label: item.portfolioName,
             value: item.portfolioId,
             isLiabilityProduct: item?.portfolioType === 9 ? true : false,
+            minimumHoldingPeriod: item?.minimumHoldingPeriod,
+            return: item?.return,
           }))
         );
       } catch (error) {
@@ -60,6 +85,121 @@ const InvestmentSimulator = () => {
     return result.toDateString();
   };
 
+  const isLiabilityProduct = (portfolioid) => {
+    const selectedProduct = productOptions.find(
+      (product) => product.value === Number(portfolioid)
+    );
+
+    return selectedProduct?.isLiabilityProduct;
+  };
+
+  const getMinimumHoldingPeriod = (portfolioId) => {
+    const selectedProduct = productOptions.find(
+      (product) => product.value === Number(portfolioId)
+    );
+    return selectedProduct?.minimumHoldingPeriod;
+  };
+
+  const getMutualFundInterest = (portfolioId) => {
+    const selectedProduct = productOptions.find(
+      (product) => product.value === Number(portfolioId)
+    );
+
+    return selectedProduct?.return;
+  };
+
+  const getSelectedProductName = (portfolioId) => {
+    const selectedProduct = productOptions.find(
+      (product) => product.value === Number(portfolioId)
+    );
+    return selectedProduct?.label;
+  };
+
+  const validationSchema = Yup.object().shape({
+    amount: Yup.number()
+      .required("Principal is required")
+      .min(1, "Principal must be greater than 0"),
+    portfolioId: Yup.string().required("Select a product"),
+    tenor: Yup.string().when("portfolioId", {
+      is: (portfolioId) => isLiabilityProduct(portfolioId),
+      then: Yup.string(),
+    }),
+  });
+
+  const handleLiabilityProductInvestment = async (
+    amount,
+    portfolioId,
+    tenor
+  ) => {
+    try {
+      const liabilityProducts = await getLiabilityProducts(portfolioId);
+      const data = await fixedIncomeSubscriptionOrder({
+        faceValue: amount,
+        currency: "NGN",
+        portfolioId: portfolioId,
+        securityProductId: liabilityProducts[0]?.securityProductId,
+        tenor: tenor,
+      });
+      if (data) {
+        toast.success(
+          `Successfully invested ${amountFormatter.format(
+            amount
+          )} in ${getSelectedProductName(portfolioId)}`
+        );
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error("An error occured while processing investment");
+    } finally {
+      setState((prev) => ({
+        ...prev,
+        processingInvestment: false,
+        isModalOpen: false,
+      }));
+    }
+  };
+
+  const handleMutualFundInvestment = async (amount, portfolioId) => {
+    try {
+      const data = await mutualFundSubscription({
+        portfolioId: portfolioId,
+        amount: amount,
+      });
+      if (data) {
+        toast.success(
+          `Successfully invested ${amountFormatter.format(
+            amount
+          )} in ${getSelectedProductName(portfolioId)}`
+        );
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error("An error occured while processing investment");
+    } finally {
+      setState((prev) => ({
+        ...prev,
+        processingInvestment: false,
+        isModalOpen: false,
+      }));
+    }
+  };
+
+  const handleInvestment = async (amount, portfolioId, tenor) => {
+    setState((prev) => ({ ...prev, processingInvestment: true }));
+
+    if (isLiabilityProduct(portfolioId) === true) {
+      await handleLiabilityProductInvestment(amount, portfolioId, tenor);
+    } else {
+      await handleMutualFundInvestment(amount, portfolioId);
+    }
+
+    setState((prev) => ({
+      ...prev,
+      processingInvestment: false,
+      isModalOpen: false,
+    }));
+  };
+
   return (
     <div>
       <HeaderText>Investment Simulator</HeaderText>
@@ -67,12 +207,21 @@ const InvestmentSimulator = () => {
       <ContentBox className={"p-[20px] md:mt-[35px] bg-white"}>
         <Formik
           initialValues={{
-            amount: "",
-            portfolioId: "",
+            amount: data?.principal || "",
+            portfolioId: data?.portfolioId || "",
             tenor: "",
           }}
+          enableReinitialize={true}
+          validationSchema={validationSchema}
+          onSubmit={(values) => {
+            setState((prev) => ({
+              ...prev,
+              isModalOpen: true,
+              isChecked: false,
+            }));
+          }}
         >
-          {({ values, setFieldValue, errors, touched }) => (
+          {({ values, setFieldValue, errors, touched, handleSubmit }) => (
             <div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-[15px] items-stretch">
                 <div>
@@ -112,7 +261,8 @@ const InvestmentSimulator = () => {
                         setFieldValue("portfolioId", portfolioId);
                         setFieldValue("tenor", "");
                         if (portfolioId) {
-                          getProductTenors(portfolioId);
+                          isLiabilityProduct(portfolioId) === true &&
+                            getProductTenors(portfolioId);
                         } else {
                           setTenorOptions([]);
                         }
@@ -131,39 +281,46 @@ const InvestmentSimulator = () => {
                     {errors.portfolioId && touched.portfolioId && (
                       <div style={{ color: "red" }}>{errors.portfolioId}</div>
                     )}
-                  </div>
-
-                  {values?.portfolioId !== "" && (
-                    <div className="flex flex-col">
-                      <label className="mb-1 text-sm font-medium">
-                        Desired Tenor
-                      </label>
-                      <Field
-                        id="tenor"
-                        name="tenor"
-                        as="select"
-                        className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <option value="">Select Tenor</option>
-                        {tenorOptions?.map((option) => (
-                          <option
-                            key={option.value}
-                            value={option.value}
-                          >
-                            {option.label}
-                          </option>
-                        ))}
-                      </Field>
-                      {errors.tenor && touched.tenor && (
-                        <div style={{ color: "red" }}>{errors.tenor}</div>
-                      )}
-                      {values?.tenor && (
+                    {values?.portfolioId &&
+                      isLiabilityProduct(values?.portfolioId) === false && (
                         <p className="text-light-primary text-sm">
-                          returns {getSelectedTenorInterest(values?.tenor)}
+                          Returns {getMutualFundInterest(values?.portfolioId)}%
                         </p>
                       )}
-                    </div>
-                  )}
+                  </div>
+
+                  {values?.portfolioId !== "" &&
+                    isLiabilityProduct(values?.portfolioId) !== false && (
+                      <div className="flex flex-col">
+                        <label className="mb-1 text-sm font-medium">
+                          Desired Tenor
+                        </label>
+                        <Field
+                          id="tenor"
+                          name="tenor"
+                          as="select"
+                          className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="">Select Tenor</option>
+                          {tenorOptions?.map((option) => (
+                            <option
+                              key={option.value}
+                              value={option.value}
+                            >
+                              {option.label}
+                            </option>
+                          ))}
+                        </Field>
+                        {errors.tenor && touched.tenor && (
+                          <div style={{ color: "red" }}>{errors.tenor}</div>
+                        )}
+                        {values?.tenor && (
+                          <p className="text-light-primary text-sm">
+                            Returns {getSelectedTenorInterest(values?.tenor)}
+                          </p>
+                        )}
+                      </div>
+                    )}
                 </div>
 
                 <div className="">
@@ -184,9 +341,15 @@ const InvestmentSimulator = () => {
                       <p className="text-sm font-semibold">
                         {values?.amount === "" && values?.tenor === ""
                           ? amountFormatter.format(0)
-                          : amountFormatter.format(
+                          : isLiabilityProduct(values?.portfolioId) === true
+                          ? amountFormatter.format(
                               Number(values?.amount) *
                                 (selectedTenorInterestRate / 100)
+                            )
+                          : amountFormatter.format(
+                              Number(values?.amount) *
+                                (getMutualFundInterest(values?.portfolioId) /
+                                  100)
                             )}
                       </p>
                     </div>
@@ -204,23 +367,92 @@ const InvestmentSimulator = () => {
                       </p>
                     </div>
 
-                    {values?.tenor && (
-                      <div className="p-2 flex items-center justify-between">
-                        <p className="text-light-primary">Maturity Date</p>
-                        <p className="text-sm font-semibold">
-                          {addDaysToDate(values?.tenor)}
-                        </p>
-                      </div>
-                    )}
+                    {isLiabilityProduct(values?.portfolioId)
+                      ? values?.tenor !== "" && (
+                          <div className="p-2 flex items-center justify-between">
+                            <p className="text-light-primary">Maturity Date</p>
+                            <p className="text-sm font-semibold">
+                              {addDaysToDate(values?.tenor)}
+                            </p>
+                          </div>
+                        )
+                      : values?.portfolioId && (
+                          <div className="p-2 flex items-center justify-between">
+                            <p className="text-light-primary">Maturity Date</p>
+                            <p className="text-sm font-semibold">
+                              {addDaysToDate(
+                                getMinimumHoldingPeriod(values?.portfolioId)
+                              )}
+                            </p>
+                          </div>
+                        )}
                   </div>
                 </div>
               </div>
               <button
+                onClick={handleSubmit}
                 type="submit"
-                className="w-full mt-5 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-white bg-primary"
+                className="w-full mt-5 border border-gray-300 rounded-md px-3 py-2 hover:bg-light-primary focus:outline-none focus:ring-2 focus:ring-primary text-white bg-primary"
               >
                 Proceed to Invest
               </button>
+
+              <AppModal
+                title="Confirm Investment"
+                isOpen={state.isModalOpen}
+                onClose={() =>
+                  !state.processingInvestment &&
+                  setState((prev) => ({
+                    ...prev,
+                    isModalOpen: false,
+                    isChecked: false,
+                  }))
+                }
+              >
+                <p className="mt-4">
+                  Redemptions during the Lock-up period will attract a 20%
+                  penalty on accrued returns earned over the period.
+                </p>
+
+                <p>
+                  {" "}
+                  By tapping the "Make Payment" button, you agree to have the
+                  total due deducted from your wallet balance to create this
+                  investment plan
+                </p>
+
+                <div style={{ marginTop: "20px", marginBottom: "20px" }}>
+                  <Switch
+                    checked={state.isChecked}
+                    onChange={() =>
+                      setState((prev) => ({
+                        ...prev,
+                        isChecked: !prev.isChecked,
+                      }))
+                    }
+                  />
+                  <p>Yes, I agree to the terms above</p>
+                </div>
+                <button
+                  onClick={() =>
+                    handleInvestment(
+                      Number(values?.amount),
+                      Number(values?.portfolioId),
+                      Number(values?.tenor)
+                    )
+                  }
+                  className="w-full mt-5 border border-gray-300 rounded-md px-3 py-2 hover:bg-light-primary focus:outline-none focus:ring-2 focus:ring-primary text-white bg-primary"
+                  disabled={!state.isChecked || state.processingInvestment}
+                >
+                  <div className="font-semibold">
+                    {state.processingInvestment ? (
+                      <SmallLoadingSpinner color={Colors.white} />
+                    ) : (
+                      "Make Payment"
+                    )}
+                  </div>
+                </button>
+              </AppModal>
             </div>
           )}
         </Formik>

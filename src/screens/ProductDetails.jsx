@@ -157,14 +157,14 @@ const ProductDetails = () => {
   });
 
   const navigate = useNavigate();
-  const { productId } = useParams();
+  const { portfolioId } = useParams();
 
   const fetchData = useCallback(async () => {
     try {
       const products = await getProducts();
       if (!products) throw new Error("Failed to fetch products");
 
-      const pId = Number(productId);
+      const pId = Number(portfolioId);
       const foundProduct = products.find((p) => p.portfolioId === pId);
       if (!foundProduct) {
         navigate("/404", { replace: true });
@@ -177,7 +177,7 @@ const ProductDetails = () => {
       let productTenors = [];
 
       if (foundProduct.portfolioType === 9) {
-        const balances = await getFixedIcomeOnlineBalances(productId);
+        const balances = await getFixedIcomeOnlineBalances(portfolioId);
         investmentBalance =
           balances?.reduce((sum, inv) => sum + inv.currentValue, 0) || 0;
         liabilityProducts = await getLiabilityProducts(
@@ -187,7 +187,7 @@ const ProductDetails = () => {
           productTenors = await getTenor(liabilityProducts[0].productId);
         }
       } else {
-        const investment = await getMutualFundOnlineBalance(productId);
+        const investment = await getMutualFundOnlineBalance(portfolioId);
         investmentBalance = investment?.balance || 0;
       }
 
@@ -206,7 +206,7 @@ const ProductDetails = () => {
       toast.error("Failed to load product details");
       navigate("/404", { replace: true });
     }
-  }, [navigate, productId]);
+  }, [navigate, portfolioId]);
 
   useEffect(() => {
     fetchData();
@@ -225,7 +225,7 @@ const ProductDetails = () => {
         data = await fixedIncomeSubscriptionOrder({
           faceValue: state.investmentAmount,
           currency: "NGN",
-          portfolioId: productId,
+          portfolioId: portfolioId,
           securityProductId: state.liabilityProducts[0]?.securityProductId,
           tenor: state.productTenors.find(
             (t) => t.tenor === Number(state.selectedTenor)
@@ -233,7 +233,7 @@ const ProductDetails = () => {
         });
       } else {
         data = await mutualFundSubscription({
-          portfolioId: productId,
+          portfolioId: portfolioId,
           amount: state.investmentAmount,
         });
       }
@@ -344,9 +344,8 @@ const ProductDetails = () => {
                 //   selectedTenor: tenor,
                 //   isModalOpen: true,
                 // }));
-                console.log("Trying to navigate to investment simulator");
                 navigate("/invest/investment_simulator", {
-                  state: { principal: amount, tenor: tenor },
+                  state: { principal: amount, portfolioId: portfolioId },
                 });
               }}
             />

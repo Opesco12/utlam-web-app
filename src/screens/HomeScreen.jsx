@@ -476,7 +476,6 @@ const HomeScreen = () => {
           </div>
         </div>
 
-        {/* Quick Access Section */}
         <ContentBox
           backgroundColor={Colors.white}
           style={{ marginTop: "35px" }}

@@ -6,7 +6,7 @@ import { userStorage } from "../storage/userStorage";
 import { keys } from "../storage/kyes";
 import { history } from "../helperFunctions/navigationHelper";
 
-export const BASE_URL = import.meta.env.VITE_DEV_BASE_URL;
+export const BASE_URL = import.meta.env.VITE_LIVE_BASE_URL;
 
 class AuthenticationError extends Error {
   constructor(message = "Authentication required") {
@@ -238,7 +238,6 @@ export const login = async (username, password) => {
 };
 
 export const login2fa = async (info) => {
-  console.log(info);
   try {
     const data = await apiCall({
       endpoint: endpoints.Login2Fa,
@@ -545,10 +544,11 @@ export const mutualFundSubscription = async ({
   portfolioId,
   amount,
 }) => {
+  console.log("payload: ", accountNumber, portfolioId, amount);
   if (accountNumber) {
     try {
       const data = await apiCall({
-        endpoint: endpoints.mutualFundWithAccount,
+        endpoint: endpoints.mutualFundSubscription,
         method: "POST",
         data: {
           accountNumber: accountNumber,

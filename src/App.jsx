@@ -73,20 +73,6 @@ const Layout = () => {
 };
 
 function App() {
-  useEffect(() => {
-    // Ensure this code runs only on the client side
-    if (typeof window !== "undefined") {
-      OneSignal.init({
-        appId: "c75039b5-eb9a-4161-8758-6bdf5e05d99a",
-        // You can add other initialization options here
-        notifyButton: {
-          enable: true,
-        },
-        // Uncomment the below line to run on localhost. See: https://documentation.onesignal.com/docs/local-testing
-        allowLocalhostAsSecureOrigin: true,
-      });
-    }
-  }, []);
   return (
     <Router>
       <AuthProvider>
@@ -109,7 +95,7 @@ function App() {
               element={<Profile />}
             />
             <Route
-              path="/invest/:productId"
+              path="/invest/:portfolioId"
               element={<ProductDetails />}
             />
 
