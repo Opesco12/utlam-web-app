@@ -32,14 +32,12 @@ const Otp = () => {
       };
       const data = await activateAccount(info);
       if (data) {
-        console.log(data);
         toast.success("Your account has been successfully activated");
         navigate("/login");
       }
     } else {
       const data = await login2fa({ email: email, code: code.join("") });
       if (data) {
-        console.log(data);
         toast.success("Login Successful");
         userStorage.setItem(keys.user, data);
         setIsAuthenticated(true);

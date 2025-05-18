@@ -44,6 +44,22 @@
       })();
     </script>
     <!--End of Tawk.to Script-->
+
+    <!-- Onesignal script -->
+    <script
+      src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"
+      defer
+    ></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function (OneSignal) {
+        await OneSignal.init({
+          appId: "c75039b5-eb9a-4161-8758-6bdf5e05d99a",
+        });
+      });
+    </script>
+    <!-- End of Onesignal script -->
+
     <script src="https://cdn.smileidentity.com/js/v1.4.2/smart-camera-web.js"></script>
     <script src="https://cdn.smileidentity.com/inline/v1/js/script.min.js"></script>
   </head>

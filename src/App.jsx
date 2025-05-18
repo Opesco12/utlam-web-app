@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ToastContainer } from "react-toastify";
+import { useState, useEffect } from "react";
+import OneSignal from "react-onesignal";
 import { Toaster } from "sonner";
 import {
   Outlet,
@@ -45,6 +45,7 @@ import BreadCrumbs from "./components/BreadCrumbs";
 import RegisterExistingUser from "./screens/RegisterExistingUser";
 import Pin from "./screens/Pin";
 import ContactRelationShipManager from "./screens/ContactRelationShipManager";
+import InvestmentSimulator from "./screens/InvestmentSimulator";
 
 const Layout = () => {
   return (
@@ -72,6 +73,20 @@ const Layout = () => {
 };
 
 function App() {
+  useEffect(() => {
+    // Ensure this code runs only on the client side
+    if (typeof window !== "undefined") {
+      OneSignal.init({
+        appId: "c75039b5-eb9a-4161-8758-6bdf5e05d99a",
+        // You can add other initialization options here
+        notifyButton: {
+          enable: true,
+        },
+        // Uncomment the below line to run on localhost. See: https://documentation.onesignal.com/docs/local-testing
+        allowLocalhostAsSecureOrigin: true,
+      });
+    }
+  }, []);
   return (
     <Router>
       <AuthProvider>
@@ -105,6 +120,11 @@ function App() {
             <Route
               path="/invest/fixed_income"
               element={<FixedIncome />}
+            />
+
+            <Route
+              path="/invest/investment_simulator"
+              element={<InvestmentSimulator />}
             />
 
             <Route

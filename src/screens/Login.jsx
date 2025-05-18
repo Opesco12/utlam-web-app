@@ -60,7 +60,6 @@ const Login = () => {
                 const userData = await login(email, password);
 
                 if (userData) {
-                  console.log(userData);
                   if (
                     userData.message ===
                     `Account is inactive. Please activate account from ${obfuscateEmail(

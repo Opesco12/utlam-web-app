@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Calendar, Judge, Moneys, PercentageCircle } from "iconsax-react";
-import { Button, Modal, Box, Switch } from "@mui/material";
-import { Formik } from "formik";
+import { Button, Switch } from "@mui/material";
+import { Formik, Form } from "formik";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import * as Yup from "yup";
@@ -14,7 +14,8 @@ import AppTextField from "../components/AppTextField";
 import AppButton from "../components/AppButton";
 import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
 import AppModal from "../components/AppModal";
-
+import AppSelect from "../components/AppSelect";
+import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 import {
   getProducts,
   mutualFundSubscription,
@@ -26,343 +27,377 @@ import {
   fixedIncomeSubscriptionOrder,
 } from "../api";
 import { amountFormatter } from "../helperFunctions/amountFormatter";
-import AppSelect from "../components/AppSelect";
-import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 
-const Details = ({ text, detail, icon }) => {
-  return (
-    <div className="w-1/2 flex flex-col items-center">
-      <div className="flex gap-3 items-center ">
-        {icon}
+const validationSchema = Yup.object().shape({
+  amount: Yup.number()
+    .typeError("Amount must be a number")
+    .required("Please input amount")
+    .positive("Amount must be positive"),
+});
+
+const DetailsItem = ({ text, detail, icon }) => (
+  <div className="w-1/2 flex flex-col items-center">
+    <div className="flex gap-3 items-center">
+      {icon}
+      <StyledText
+        type="label"
+        color={Colors.lightPrimary}
+      >
+        {text}
+      </StyledText>
+    </div>
+    <StyledText
+      type="subheading"
+      variant="medium"
+      color={Colors.text}
+    >
+      {detail}
+    </StyledText>
+  </div>
+);
+
+const InvestmentBalance = ({ balance }) => (
+  <ContentBox>
+    <div className="flex flex-col items-center justify-center">
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <Moneys
+          variant="Bold"
+          size={25}
+          color={Colors.primary}
+        />
         <StyledText
-          type="label"
-          color={Colors.lightPrimary}
+          color={Colors.primary}
+          variant="medium"
+          type="subheading"
         >
-          {text}
+          Investment Balance
         </StyledText>
       </div>
       <StyledText
-        type="subheading"
-        variant="medium"
-        color={Colors.text}
+        color={Colors.primary}
+        type="heading"
+        variant="semibold"
       >
-        {detail}
+        {amountFormatter.format(balance)}
       </StyledText>
     </div>
+  </ContentBox>
+);
+
+const InvestmentForm = ({
+  product,
+  userBalance,
+  isLiabilityProduct,
+  tenorOptions,
+  onSubmit,
+}) => {
+  const [selectedTenor, setSelectedTenor] = useState("");
+
+  return (
+    <Formik
+      initialValues={{ amount: "" }}
+      validationSchema={validationSchema}
+      onSubmit={(values) => {
+        const amount = Number(values.amount);
+        if (amount < product.minimumInvestment) {
+          toast.error(
+            `Minimum investment is ${amountFormatter.format(
+              product.minimumInvestment
+            )}`
+          );
+          return;
+        }
+        if (amount > userBalance) {
+          toast.error("Insufficient wallet balance");
+          return;
+        }
+        if (isLiabilityProduct && !selectedTenor) {
+          toast.error("Please select a tenor");
+          return;
+        }
+        onSubmit(amount, selectedTenor);
+      }}
+    >
+      {({ handleChange }) => (
+        <Form className="flex flex-col gap-5">
+          <AppTextField
+            name="amount"
+            label="Amount to invest"
+            onChange={handleChange("amount")}
+          />
+          {isLiabilityProduct && (
+            <AppSelect
+              name="tenor"
+              options={tenorOptions}
+              onValueChange={(value) => setSelectedTenor(value)}
+              label="Tenor"
+            />
+          )}
+          <AppButton type="submit">Invest</AppButton>
+        </Form>
+      )}
+    </Formik>
   );
 };
 
 const ProductDetails = () => {
-  const [userBalance, setUserBalance] = useState(0);
-  const [products, setProducts] = useState([]);
-  const [product, setProduct] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [processingInvesment, setProcessingInvestment] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [investmentAmount, setInvestmentAmount] = useState(0);
-  const [investmentBalance, setInvestmentBalance] = useState(0);
-  const [isChecked, setIsChecked] = useState(false);
-  const [isLiabiltyProduct, setIsLiabilityProduct] = useState(false);
-  const [liabiltyProducts, setLiabilityProducts] = useState([]);
-  const [productTenors, setProductTenors] = useState([]);
-  const [selectedTenor, setSelectedTenor] = useState("");
+  const [state, setState] = useState({
+    userBalance: 0,
+    products: [],
+    product: null,
+    investmentBalance: 0,
+    isLiabilityProduct: false,
+    liabilityProducts: [],
+    productTenors: [],
+    loading: true,
+    processingInvestment: false,
+    isModalOpen: false,
+    investmentAmount: 0,
+    isChecked: false,
+  });
 
   const navigate = useNavigate();
   const { productId } = useParams();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // setLoading(true);
+  const fetchData = useCallback(async () => {
+    try {
       const products = await getProducts();
-      products && setProducts(products);
+      if (!products) throw new Error("Failed to fetch products");
 
       const pId = Number(productId);
-      const foundProduct = products?.find((p) => p.portfolioId === pId);
+      const foundProduct = products.find((p) => p.portfolioId === pId);
       if (!foundProduct) {
         navigate("/404", { replace: true });
+        return;
       }
-      setProduct(foundProduct);
 
       const userBalance = await getWalletBalance();
-      setUserBalance(userBalance && userBalance[0]?.amount);
+      let investmentBalance = 0;
+      let liabilityProducts = [];
+      let productTenors = [];
 
-      if (foundProduct?.portfolioType === 9) {
-        const investmentbalances = await getFixedIcomeOnlineBalances(productId);
-        var balance = 0;
-        investmentbalances?.map((investment, index) => {
-          balance += investment.currentValue;
-        });
-        setInvestmentBalance(balance);
-
-        setIsLiabilityProduct(true);
-        const liabilityProducts = await getLiabilityProducts(
-          foundProduct?.portfolioId
+      if (foundProduct.portfolioType === 9) {
+        const balances = await getFixedIcomeOnlineBalances(productId);
+        investmentBalance =
+          balances?.reduce((sum, inv) => sum + inv.currentValue, 0) || 0;
+        liabilityProducts = await getLiabilityProducts(
+          foundProduct.portfolioId
         );
-        if (liabilityProducts) {
-          setLiabilityProducts(liabilityProducts);
-          const tenors = await getTenor(liabilityProducts[0].productId);
-          setProductTenors(tenors);
+        if (liabilityProducts?.length) {
+          productTenors = await getTenor(liabilityProducts[0].productId);
         }
       } else {
         const investment = await getMutualFundOnlineBalance(productId);
-        if (investment) setInvestmentBalance(investment.balance);
+        investmentBalance = investment?.balance || 0;
       }
 
-      setLoading(false);
-    };
-
-    fetchData();
+      setState((prev) => ({
+        ...prev,
+        products,
+        product: foundProduct,
+        userBalance: userBalance?.[0]?.amount || 0,
+        investmentBalance,
+        isLiabilityProduct: foundProduct.portfolioType === 9,
+        liabilityProducts,
+        productTenors,
+        loading: false,
+      }));
+    } catch (error) {
+      toast.error("Failed to load product details");
+      navigate("/404", { replace: true });
+    }
   }, [navigate, productId]);
 
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   const handleInvestment = async () => {
-    setProcessingInvestment(true);
-    if (!investmentAmount) {
+    if (!state.investmentAmount) {
       toast.error("Please input amount");
-    } else {
-      if (isLiabiltyProduct) {
-        const data = await fixedIncomeSubscriptionOrder({
-          faceValue: investmentAmount,
+      return;
+    }
+
+    setState((prev) => ({ ...prev, processingInvestment: true }));
+    try {
+      let data;
+      if (state.isLiabilityProduct) {
+        data = await fixedIncomeSubscriptionOrder({
+          faceValue: state.investmentAmount,
           currency: "NGN",
           portfolioId: productId,
-          securityProductId: liabiltyProducts[0]?.securityProductId,
-          tenor: selectedTenor,
+          securityProductId: state.liabilityProducts[0]?.securityProductId,
+          tenor: state.productTenors.find(
+            (t) => t.tenor === Number(state.selectedTenor)
+          )?.tenor,
         });
-
-        if (data) {
-          toast.success(
-            `You have successfully invested ${amountFormatter.format(
-              investmentAmount
-            )} in ${product.portfolioName}`
-          );
-          navigate("/");
-        }
       } else {
-        const data = await mutualFundSubscription({
+        data = await mutualFundSubscription({
           portfolioId: productId,
-          amount: investmentAmount,
+          amount: state.investmentAmount,
         });
-
-        if (data) {
-          toast.success(
-            `You have successfully invested ${amountFormatter.format(
-              investmentAmount
-            )} in ${product.portfolioName}`
-          );
-          navigate("/");
-        }
       }
+
+      if (data) {
+        toast.success(
+          `Successfully invested ${amountFormatter.format(
+            state.investmentAmount
+          )} in ${state.product?.portfolioName}`
+        );
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error("Investment failed");
+    } finally {
+      setState((prev) => ({
+        ...prev,
+        processingInvestment: false,
+        isModalOpen: false,
+      }));
     }
-    setProcessingInvestment(false);
   };
 
-  const validationSchema = Yup.object().shape({
-    amount: Yup.number("Amount must be a number")
-      .label("Amount")
-      .required("Please input amount"),
-  });
+  const tenorOptions = state.productTenors.map((tenor) => ({
+    label: `${tenor.tenor} Days`,
+    value: tenor.tenor,
+  }));
 
-  const tenorOptions = productTenors?.map((tenor, index) => {
-    return {
-      label: `${tenor.tenor} Days`,
-      value: tenor.tenor,
-    };
-  });
+  if (state.loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <LargeLoadingSpinner color={Colors.lightPrimary} />
+      </div>
+    );
+  }
+
+  if (!state.product) {
+    navigate("/404", { replace: true });
+  }
 
   return (
     <div className="h-full">
-      {loading ? (
-        <div className="h-screen flex items-center justify-center">
-          <LargeLoadingSpinner color={Colors.lightPrimary} />
-        </div>
-      ) : (
-        <>
-          <HeaderText>{product.portfolioName}</HeaderText>
-
-          <ContentBox>
-            <div className="flex flex-col items-center justify-center">
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Moneys
-                  variant="Bold"
-                  size={25}
-                  color={Colors.primary}
-                />
-                <StyledText
-                  color={Colors.primary}
-                  variant="medium"
-                  type="subheading"
-                >
-                  Investment Balance
-                </StyledText>
-              </div>
-              <StyledText
-                color={Colors.primary}
-                type="heading"
-                variant="semibold"
-              >
-                {amountFormatter.format(investmentBalance)}
-              </StyledText>
-            </div>
-          </ContentBox>
-
-          <ContentBox className={"mt-[20px] md:mt-[35px]"}>
-            <div className="flex justify-between flex-col md:flex-row">
-              <div className="flex flex-col gap-5 w-[100%] md:w-[55%] ">
-                <div className="flex">
-                  <Details
-                    icon={
-                      <PercentageCircle
-                        color={Colors.lightPrimary}
-                        variant="Bold"
-                        size={25}
-                      />
-                    }
-                    text={"Annualized Yield"}
-                    detail={`${product.return}%`}
+      <HeaderText>{state.product.portfolioName}</HeaderText>
+      <InvestmentBalance balance={state.investmentBalance} />
+      <ContentBox className="mt-[20px] md:mt-[35px]">
+        <div className="flex justify-between flex-col md:flex-row">
+          <div className="flex flex-col gap-5 w-[100%] md:w-[55%]">
+            <div className="flex">
+              <DetailsItem
+                icon={
+                  <PercentageCircle
+                    color={Colors.lightPrimary}
+                    variant="Bold"
+                    size={25}
                   />
-
-                  <Details
-                    icon={
-                      <Moneys
-                        color={Colors.lightPrimary}
-                        variant="Bold"
-                        size={25}
-                      />
-                    }
-                    text={"Minimum Investment"}
-                    detail={amountFormatter.format(product.minimumInvestment)}
-                  />
-                </div>
-                <hr className="border-gray-300" />
-                <div className="gap-5 flex">
-                  <Details
-                    icon={
-                      <Calendar
-                        color={Colors.lightPrimary}
-                        variant="Bold"
-                        size={25}
-                      />
-                    }
-                    text={"Minimum Holding Period"}
-                    detail={`${product.minimumHoldingPeriod} Days`}
-                  />
-
-                  <Details
-                    icon={
-                      <Judge
-                        color={Colors.lightPrimary}
-                        variant="Bold"
-                        size={25}
-                      />
-                    }
-                    text={"Penalty Rate"}
-                    detail={`${product.earlyRedemptionPenaltyRate}%`}
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-5 w-[100%] mt-[50px] md:w-[40%] md:mt-[0px]">
-                <Formik
-                  validationSchema={validationSchema}
-                  initialValues={{ amount: "" }}
-                  onSubmit={(values) => {
-                    const { amount } = values;
-                    setInvestmentAmount(amount);
-
-                    if (amount < product?.minimumInvestment) {
-                      toast.error(
-                        `Minimum investment is ${amountFormatter.format(
-                          product.minimumInvestment
-                        )}`
-                      );
-                    } else if (amount > userBalance) {
-                      toast.error(
-                        "Your wallet balance is insufficient for this transaction"
-                      );
-                    } else if (isLiabiltyProduct) {
-                      if (!selectedTenor) {
-                        toast.error("Please select a tenor");
-                      } else {
-                        setIsModalOpen(true);
-                      }
-                    } else {
-                      setIsModalOpen(true);
-                    }
-                  }}
-                >
-                  {({ handleChange, handleSubmit }) => (
-                    <>
-                      <AppTextField
-                        name={"amount"}
-                        label={"Amount to invest"}
-                        onChange={handleChange("amount")}
-                      />
-
-                      {isLiabiltyProduct && (
-                        <AppSelect
-                          name={"tenor"}
-                          options={tenorOptions}
-                          onValueChange={(value) => setSelectedTenor(value)}
-                          // selectedValue={selectedTenor}
-                          // setSelectedValue={setSelectedTenor}
-                          label="Tenor"
-                        />
-                      )}
-
-                      <AppButton onClick={handleSubmit}>Invest</AppButton>
-                    </>
-                  )}
-                </Formik>
-              </div>
-            </div>
-          </ContentBox>
-          <AppModal
-            title={"Confirm Investment"}
-            isOpen={isModalOpen}
-            onClose={() => {
-              !processingInvesment && setIsModalOpen(false);
-
-              !processingInvesment && setIsChecked(false);
-            }}
-          >
-            <StyledText style={{ marginTop: "20px" }}>
-              Redemptions during the Lock-up period will attract a 20% penalty
-              on accrued returns earned over the period. <br />
-              <StyledText style={{ marginTop: "20px" }}>
-                By tapping the "Make Payment" button, you agree to have the
-                total due deducted from your wallet balance to create this
-                investment plan
-              </StyledText>
-            </StyledText>
-
-            <div style={{ marginTop: "20px", marginBottom: "20px" }}>
-              <Switch
-                checked={isChecked}
-                onChange={() => setIsChecked(!isChecked)}
+                }
+                text="Annualized Yield"
+                detail={`${state.product.return}%`}
               />
-              <StyledText>Yes, I agree to the terms above</StyledText>
+              <DetailsItem
+                icon={
+                  <Moneys
+                    color={Colors.lightPrimary}
+                    variant="Bold"
+                    size={25}
+                  />
+                }
+                text="Minimum Investment"
+                detail={amountFormatter.format(state.product.minimumInvestment)}
+              />
             </div>
-
-            <Button
-              onClick={async () => {
-                await handleInvestment();
-                setIsModalOpen(false);
+            <hr className="border-gray-300" />
+            <div className="gap-5 flex">
+              <DetailsItem
+                icon={
+                  <Calendar
+                    color={Colors.lightPrimary}
+                    variant="Bold"
+                    size={25}
+                  />
+                }
+                text="Minimum Holding Period"
+                detail={`${state.product.minimumHoldingPeriod} Days`}
+              />
+              <DetailsItem
+                icon={
+                  <Judge
+                    color={Colors.lightPrimary}
+                    variant="Bold"
+                    size={25}
+                  />
+                }
+                text="Penalty Rate"
+                detail={`${state.product.earlyRedemptionPenaltyRate}%`}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-5 w-[100%] mt-[50px] md:w-[40%] md:mt-[0px]">
+            <InvestmentForm
+              product={state.product}
+              userBalance={state.userBalance}
+              isLiabilityProduct={state.isLiabilityProduct}
+              tenorOptions={tenorOptions}
+              onSubmit={(amount, tenor) => {
+                // setState((prev) => ({
+                //   ...prev,
+                //   investmentAmount: amount,
+                //   selectedTenor: tenor,
+                //   isModalOpen: true,
+                // }));
+                console.log("Trying to navigate to investment simulator");
+                navigate("/invest/investment_simulator", {
+                  state: { principal: amount, tenor: tenor },
+                });
               }}
-              variant="contained"
-              style={{ backgroundColor: Colors.primary, height: "50px" }}
-              className="w-full"
-              disabled={isChecked === false ? true : false}
-            >
-              <StyledText variant="semibold">
-                {processingInvesment ? (
-                  <SmallLoadingSpinner color={Colors.white} />
-                ) : (
-                  "Make Payment"
-                )}
-              </StyledText>
-            </Button>
-          </AppModal>
-        </>
-      )}
+            />
+          </div>
+        </div>
+      </ContentBox>
+      <AppModal
+        title="Confirm Investment"
+        isOpen={state.isModalOpen}
+        onClose={() =>
+          !state.processingInvestment &&
+          setState((prev) => ({
+            ...prev,
+            isModalOpen: false,
+            isChecked: false,
+          }))
+        }
+      >
+        <StyledText style={{ marginTop: "20px" }}>
+          Redemptions during the Lock-up period will attract a 20% penalty on
+          accrued returns earned over the period. <br />
+          <StyledText style={{ marginTop: "20px" }}>
+            By tapping the "Make Payment" button, you agree to have the total
+            due deducted from your wallet balance to create this investment plan
+          </StyledText>
+        </StyledText>
+        <div style={{ marginTop: "20px", marginBottom: "20px" }}>
+          <Switch
+            checked={state.isChecked}
+            onChange={() =>
+              setState((prev) => ({ ...prev, isChecked: !prev.isChecked }))
+            }
+          />
+          <StyledText>Yes, I agree to the terms above</StyledText>
+        </div>
+        <Button
+          onClick={handleInvestment}
+          variant="contained"
+          style={{ backgroundColor: Colors.primary, height: "50px" }}
+          className="w-full"
+          disabled={!state.isChecked || state.processingInvestment}
+        >
+          <StyledText variant="semibold">
+            {state.processingInvestment ? (
+              <SmallLoadingSpinner color={Colors.white} />
+            ) : (
+              "Make Payment"
+            )}
+          </StyledText>
+        </Button>
+      </AppModal>
     </div>
   );
 };

@@ -19,7 +19,6 @@ import {
   nextOfKinSchema,
 } from "../validationSchemas/userSchema";
 
-// Custom TextField component using Formik's Field
 const TextField = ({ label, ...props }) => {
   return (
     <div className="flex flex-col">
@@ -37,7 +36,6 @@ const TextField = ({ label, ...props }) => {
   );
 };
 
-// Custom Select component using Formik's Field
 const SelectField = ({ label, options, ...props }) => {
   return (
     <div className="flex flex-col">

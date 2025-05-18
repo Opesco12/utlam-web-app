@@ -6,7 +6,7 @@ import { userStorage } from "../storage/userStorage";
 import { keys } from "../storage/kyes";
 import { history } from "../helperFunctions/navigationHelper";
 
-export const BASE_URL = import.meta.env.VITE_LIVE_BASE_URL;
+export const BASE_URL = import.meta.env.VITE_DEV_BASE_URL;
 
 class AuthenticationError extends Error {
   constructor(message = "Authentication required") {
@@ -216,7 +216,6 @@ export const createNextOfKin = async (info) => {
 };
 
 export const login = async (username, password) => {
-  console.log(username, password);
   try {
     const data = await apiCall({
       endpoint: endpoints.Login,
@@ -747,7 +746,8 @@ export const createClientBank = async (requestData) => {
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
       console.error(error);
-      toast.error("Invalid details or error while processing request");
+      toast.error(error?.response?.data?.Message);
+      // toast.error("Invalid details or error while processing request");
     }
     return null;
   }

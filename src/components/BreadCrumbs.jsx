@@ -12,21 +12,15 @@ const routeNameMap = {
   fixed_income: "Fixed Income",
   "personal-details": "Personal Details",
   "bank-details": "Bank Details",
+  investment_simulator: "Investment Simulator",
   referral: "Referral",
   kyc: "KYC",
   "change-password": "Change Password",
   statement: "Statement",
   withdraw: "Withdraw",
+  pin: "Pin",
+  "contact-manager": "Contact Manager",
 };
-
-const sidebarRoutes = [
-  "",
-  "/invest/mutual_fund",
-  "/invest/fixed_income",
-  "/portfolio",
-  "/profile",
-  "/transactions",
-];
 
 const BreadcrumbItem = ({ label, to, isLast, onClick }) => {
   return (
@@ -55,35 +49,33 @@ const Breadcrumbs = () => {
   const [referringRoute, setReferringRoute] = useState(null);
 
   const getProductName = async (productId) => {
-    const products = await getProducts();
-    const product = products.find(
-      (item) => item?.portfolioId === Number(productId)
-    );
-    return _.startCase(_.toLower(product?.portfolioName));
+    try {
+      const products = await getProducts();
+      const product = products?.find(
+        (item) => item?.portfolioId === Number(productId)
+      );
+      return product
+        ? _.startCase(_.toLower(product.portfolioName))
+        : "Product";
+    } catch (error) {
+      console.error("Failed to fetch product name:", error);
+      return "Product";
+    }
   };
 
   useEffect(() => {
-    if (location.pathname.includes("/invest/")) {
-      const isFromMutualFund = location.state?.from === "/mutual_fund";
-      const isFromFixedIncome = location.state?.from === "/fixed_income";
-
-      if (isFromMutualFund) {
-        setReferringRoute("/mutual_fund");
-      } else if (isFromFixedIncome) {
-        setReferringRoute("/fixed_income");
-      }
-    }
-
-    const buildBreadcrumbs = () => {
+    const buildBreadcrumbs = async () => {
       const pathSegments = location.pathname
         .split("/")
         .filter((segment) => segment);
 
       const hiddenRoutes = [
         "/",
+        "/portfolio",
+        "/profile",
+        "/transactions",
         "/invest/mutual_fund",
         "/invest/fixed_income",
-        ...sidebarRoutes,
       ];
 
       if (hiddenRoutes.includes(location.pathname)) {
@@ -93,53 +85,87 @@ const Breadcrumbs = () => {
 
       setShouldShow(true);
 
+      const isFromMutualFund = location.state?.from === "/mutual_fund";
+      const isFromFixedIncome = location.state?.from === "/fixed_income";
+      const newReferringRoute = isFromMutualFund
+        ? "/mutual_fund"
+        : isFromFixedIncome
+        ? "/fixed_income"
+        : null;
+
+      setReferringRoute(newReferringRoute);
+
       const breadcrumbItems = [];
+      let currentPath = "";
 
-      pathSegments.forEach((segment, index) => {
-        const path = `/${pathSegments.slice(0, index + 1).join("/")}`;
+      for (let i = 0; i < pathSegments.length; i++) {
+        const segment = pathSegments[i];
+        currentPath = `${currentPath}/${segment}`;
 
-        if (segment === "invest") return;
+        if (segment === "invest") {
+          continue;
+        }
 
-        if (index > 0 && pathSegments[index - 1] === "invest") {
-          const productId = segment;
-          const productName = getProductName(productId);
-
+        if (pathSegments[i - 1] === "invest" && !isNaN(segment)) {
+          const productName = await getProductName(segment);
           breadcrumbItems.push({
             label: "Invest",
-            path: referringRoute || "/",
+            path: newReferringRoute || "/invest/mutual_fund",
             isSpecial: true,
           });
-
           breadcrumbItems.push({
             label: productName,
-            path,
+            path: currentPath,
           });
-
-          return;
+          continue;
         }
-
-        let label =
-          routeNameMap[segment] ||
-          segment.charAt(0).toUpperCase() + segment.slice(1);
 
         if (
-          index > 0 &&
-          pathSegments[index - 1] === "portfolio" &&
-          !routeNameMap[segment]
+          segment === "investment_simulator" &&
+          pathSegments[i - 1] === "invest"
         ) {
-          label = segment.charAt(0).toUpperCase() + segment.slice(1);
+          breadcrumbItems.push({
+            label: "Invest",
+            path: newReferringRoute || "/invest/mutual_fund",
+            isSpecial: true,
+          });
+          breadcrumbItems.push({
+            label: routeNameMap[segment],
+            path: currentPath,
+          });
+          continue;
         }
 
-        breadcrumbItems.push({ label, path });
-      });
+        // Handle portfolio details routes
+        if (
+          pathSegments[i - 1] === "portfolio" &&
+          !routeNameMap[segment] &&
+          segment !== "portfolio"
+        ) {
+          breadcrumbItems.push({
+            label: _.startCase(_.toLower(segment)),
+            path: currentPath,
+          });
+          continue;
+        }
+
+        // Default case: use routeNameMap or capitalize segment
+        const label =
+          routeNameMap[segment] ||
+          _.startCase(_.toLower(segment.replace(/-/g, " ")));
+
+        breadcrumbItems.push({
+          label,
+          path: currentPath,
+        });
+      }
 
       setBreadcrumbs(breadcrumbItems);
     };
 
     buildBreadcrumbs();
-  }, [location, referringRoute]);
+  }, [location.pathname, location.state]);
 
-  // Do not render if not needed
   if (!shouldShow) return null;
 
   const handleInvestClick = (item, e) => {

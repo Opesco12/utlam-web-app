@@ -39,7 +39,6 @@ const BankDetails = () => {
 
   const fetchData = async () => {
     const clientbanks = await getClientBankAccounts();
-    console.log(clientbanks);
     setClientbanks(clientbanks);
 
     const banklist = await getBanks();
@@ -67,7 +66,6 @@ const BankDetails = () => {
       countryCode: "NGA",
     };
     const response = await createClientBank(requestData);
-    console.log(response);
     if (response) {
       if (response?.message === "success") {
         toast.success("Bank Details have been added successfully");
