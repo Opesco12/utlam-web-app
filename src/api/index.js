@@ -790,6 +790,22 @@ export const debitWallet = async (requestData) => {
   }
 };
 
+export const getPendingWithdrawals = async () => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.getPendingWithdrawals,
+      method: "GET",
+    });
+    return data;
+  } catch (error) {
+    if (!(error instanceof AuthenticationError)) {
+      console.error(error);
+      toast.error("An error occurred while fetching pending withdrawals");
+    }
+    return null;
+  }
+};
+
 export const fetchClientPhoto = async () => {
   try {
     const data = await apiCall({

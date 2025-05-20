@@ -33,6 +33,7 @@ export const endpoints = {
   getClientBanks: "/getclientbankaccounts",
   createBank: "/createbankaccount",
   withdraw: "/walletwithdrawalrequest",
+  getPendingWithdrawals: "/getpendingwithdrawals",
   clientRelationshipManager: "/getclientrelationshipmanager",
   getClientPhoto: "/getclientphoto",
   uploadClientPhoto: "/uploadclientphoto",

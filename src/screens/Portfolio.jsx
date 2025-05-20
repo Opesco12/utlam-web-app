@@ -68,7 +68,8 @@ const Portfolio = () => {
         });
 
         mutualFundBalances?.forEach((investment) => {
-          totalBalance += investment?.balance || 0;
+          totalBalance =
+            investment?.balance + (investment?.pendingDividendAmount || 0);
         });
 
         setPortfolioData({

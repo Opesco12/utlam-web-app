@@ -36,7 +36,7 @@ const StepIndicator = ({ currentStep }) => {
           2
         </div>
 
-        {/* Connecting Line */}
+        {/* Connecting Line
         <div
           className="w-16 h-1 mx-2"
           style={{
@@ -44,7 +44,6 @@ const StepIndicator = ({ currentStep }) => {
           }}
         ></div>
 
-        {/* Step 3 Circle */}
         <div
           className={`flex items-center justify-center w-8 h-8 rounded-full ${
             currentStep === 3
@@ -53,7 +52,8 @@ const StepIndicator = ({ currentStep }) => {
           }`}
         >
           3
-        </div>
+        </div> 
+        */}
       </div>
     </div>
   );

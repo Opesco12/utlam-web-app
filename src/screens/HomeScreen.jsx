@@ -133,7 +133,7 @@ const HomeScreen = () => {
       }
 
       setSubmitting(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second loading
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setState((prev) => ({
         ...prev,
         withdrawalAmount: amount,
@@ -266,7 +266,8 @@ const HomeScreen = () => {
           });
         });
         mutualFundBalances?.forEach((investment) => {
-          portfolioBalance += investment?.balance || 0;
+          portfolioBalance =
+            investment?.balance + (investment?.pendingDividendAmount || 0);
         });
 
         setState((prev) => ({

@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Country, State, City } from "country-state-city";
 import csc from "countries-states-cities";
-// import SmartCameraWeb from "@smileid/web-components/smart-camera-web";
 import "@smileid/web-components/smart-camera-web";
 import axios from "axios";
 
@@ -17,13 +16,11 @@ import AppButton from "../components/AppButton";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 
 import { getCountries, registerNewIndividual } from "../api";
-import SmileIDCamera from "../components/SmileIdCamera";
 import {
   RegisterStep1ValidationSchema,
   RegisterStep2ValidationSchema,
 } from "../validationSchemas/userSchema";
 import StepIndicator from "../components/StepIndicator";
-import SmileIDKYC from "../components/SmileIdKYC";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -101,13 +98,11 @@ const Register = () => {
     }
   }, [selectedCountryIso2, selectedState]);
 
-  // Handle next step
   const handleNextStep = (values) => {
     setFormData({ ...formData, ...values });
     setStep(2);
   };
 
-  // Handle previous step
   const handlePrevStep = () => {
     setStep(1);
   };

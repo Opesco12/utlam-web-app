@@ -53,7 +53,12 @@ const RegisterExistingUser = () => {
               </StyledText>
             </div>
             <Formik
-              initialValues={{ accountNumber: "", email: "", password: "" }}
+              initialValues={{
+                accountNumber: "",
+                email: "",
+                password: "",
+                confirmPassword: "",
+              }}
               validationSchema={existingUserRegistrationSchema}
               onSubmit={async (values, { setSubmitting }) => {
                 setSubmitting(true);
@@ -66,25 +71,14 @@ const RegisterExistingUser = () => {
                   });
 
                   if (userData) {
-                    console.log(userData);
-                    if (
-                      userData.message ===
-                      `Account is inactive. Please activate account from ${obfuscateEmail(
-                        email
-                      )}`
-                    ) {
-                      toast.error(
-                        "Account is inactive. Please activate account"
-                      );
-                      navigate("/account/2fa", {
-                        state: { email: email, header: "Activate Account" },
-                      });
-                    } else {
-                      navigate("/account/2fa", { state: { email: email } });
-                    }
+                    navigate("/account/2fa", {
+                      state: { email: email, header: "Activate Account" },
+                    });
                   }
                 } catch (error) {
-                  toast.error(error.message || "Registration failed");
+                  toast.error(
+                    error.response.data?.Message || "Registration failed"
+                  );
                 } finally {
                   setSubmitting(false);
                 }
@@ -110,6 +104,14 @@ const RegisterExistingUser = () => {
                     label="Password"
                     name="password"
                     onChange={handleChange("password")}
+                    type="password"
+                    placeholder="Enter your password"
+                  />
+
+                  <AppTextField
+                    label="Confirm Password"
+                    name="confirmPassword"
+                    onChange={handleChange("confirmPassword")}
                     type="password"
                     placeholder="Enter your password"
                   />

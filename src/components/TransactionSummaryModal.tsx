@@ -32,7 +32,9 @@ export default function TransactionSummaryModal({
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-500">Amount:</span>
             <span className="font-medium">
-              {amountFormatter.format(transaction?.amount)}
+              {amountFormatter.format(
+                transaction?.amount || transaction?.netAmount
+              )}
             </span>
           </div>
 
@@ -40,6 +42,34 @@ export default function TransactionSummaryModal({
             <span className="text-gray-500 mr-2">Description:</span>
             <span className="font-medium">{transaction?.description}</span>
           </div>
+          {transaction?.schemeId && (
+            <>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-500 mr-2">
+                  Beneficiary Account Number:
+                </span>
+                <span className="font-medium">
+                  {transaction?.beneficiaryAccountNo}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-500 mr-2">Benficiary Name:</span>
+                <span className="font-medium">
+                  {transaction?.beneficiaryName}
+                </span>
+              </div>
+
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-500 mr-2">Reference Number:</span>
+                <span className="font-medium">{transaction?.referenceNo}</span>
+              </div>
+
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-500 mr-2">Status:</span>
+                <span className="font-medium">{transaction?.status}</span>
+              </div>
+            </>
+          )}
 
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-500">Date:</span>

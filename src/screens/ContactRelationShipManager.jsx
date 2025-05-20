@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import HeaderText from "../components/HeaderText";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
+import { Colors } from "../constants/Colors";
 import { toast } from "sonner";
 import { sendMessageToClientManager } from "../api";
 
@@ -12,7 +13,7 @@ const ContactRelationShipManager = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const response = await sendMessageToClientManager(message);
+      const response = await sendMessageToClientManager({ message: message });
       if (response) {
         toast.success("Message sent successfully!");
       }

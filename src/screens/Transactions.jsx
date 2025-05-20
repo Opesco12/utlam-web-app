@@ -8,13 +8,27 @@ import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
 import { amountFormatter } from "../helperFunctions/amountFormatter";
 import { Colors } from "../constants/Colors";
 
-import { getTransactions } from "../api";
+import { getTransactions, getPendingWithdrawals } from "../api";
 import HeaderText from "../components/HeaderText";
 import TransactionSummaryModal from "../components/TransactionSummaryModal";
+
+const Tab = ({ active, onClick, children }) => {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 rounded-md py-1 font-medium ${
+        active ? `bg-white text-primary` : `text-gray-500 hover:text-gray-700`
+      } transition-colors`}
+    >
+      {children}
+    </button>
+  );
+};
 
 const Transactions = () => {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState([]);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState([]);
   const [startdate, setStartdate] = useState(null);
   const [enddate, setEnddate] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,6 +38,7 @@ const Transactions = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [activeTab, setActiveTab] = useState("transactions");
 
   useEffect(() => {
     const currentDate = new Date();
@@ -34,7 +49,6 @@ const Transactions = () => {
   }, []);
 
   const fetchTransactionsForDateRange = async (start, end) => {
-    console.log(start, end);
     try {
       const allTransactions = await getTransactions(start, end);
       setTotalPages(Math.ceil(allTransactions.length / itemsPerPage));
@@ -45,8 +59,11 @@ const Transactions = () => {
         startIndex,
         endIndex
       );
-
       setTransactions(paginatedTransactions);
+
+      const pendingTransactions = await getPendingWithdrawals();
+      setPendingWithdrawals(pendingTransactions);
+
       setLoading(false);
     } catch (error) {
       console.error("Error fetching transactions:", error);
@@ -87,30 +104,64 @@ const Transactions = () => {
     <div className="flex h-full flex-col">
       <HeaderText>Transaction History</HeaderText>
 
-      <div className="flex-1 rounded-xl bg-white p-5 md:p-3 lg:p-5 shadow-md">
-        <MonthYearSelector
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
-          onChange={handleMonthYearChange}
-        />
-        <div className="">
-          {transactions?.map((transaction, index) => (
-            <TransactionItem
-              transaction={transaction}
-              key={index}
-              onClick={() => {
-                setSelectedTransaction(transaction);
-                setIsModalOpen(true);
-              }}
-            />
-          ))}
+      <div className="bg-gray-200 rounded-lg w-fit p-2 mb-5">
+        <div className="flex">
+          <Tab
+            active={activeTab === "transactions"}
+            onClick={() => setActiveTab("transactions")}
+          >
+            Transactions
+          </Tab>
+          <Tab
+            active={activeTab === "pendingTransactions"}
+            onClick={() => setActiveTab("pendingTransactions")}
+          >
+            Pending Transactions
+          </Tab>
         </div>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
       </div>
+
+      {activeTab === "transactions" ? (
+        <div className="flex-1 rounded-xl bg-white p-5 md:p-3 lg:p-5 shadow-md">
+          <MonthYearSelector
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            onChange={handleMonthYearChange}
+          />
+          <div className="">
+            {transactions?.map((transaction, index) => (
+              <TransactionItem
+                transaction={transaction}
+                key={index}
+                onClick={() => {
+                  setSelectedTransaction(transaction);
+                  setIsModalOpen(true);
+                }}
+              />
+            ))}
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      ) : (
+        <div className="flex-1 rounded-xl bg-white p-5 md:p-3 lg:p-5 shadow-md">
+          <div className="">
+            {pendingWithdrawals?.map((transaction, index) => (
+              <TransactionItem
+                transaction={{ ...transaction, amount: transaction?.netAmount }}
+                key={index}
+                onClick={() => {
+                  setSelectedTransaction(transaction);
+                  setIsModalOpen(true);
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <TransactionSummaryModal
         isOpen={isModalOpen}
@@ -142,7 +193,9 @@ const TransactionItem = ({ transaction, onClick }) => {
             display: "inline-block",
           }}
         >
-          {`${transaction?.description} - ${transaction?.portfolio}`}
+          {`${transaction?.description} - ${
+            transaction?.portfolio || transaction?.referenceNo
+          }`}
         </StyledText>
         <StyledText
           type="label"

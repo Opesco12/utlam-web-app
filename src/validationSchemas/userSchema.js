@@ -26,6 +26,9 @@ export const existingUserRegistrationSchema = Yup.object().shape({
       /[@$!%*?&#]/,
       "Password must contain at least one special character (@$!%*?&#)"
     ),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref("password"), null], "Passwords must match")
+    .required("Password is required"),
 });
 
 export const userRegisterSchema = Yup.object().shape({
@@ -59,7 +62,7 @@ export const userRegisterSchema = Yup.object().shape({
 
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password"), null], "Passwords must match")
-    .required("Confirm Password is required"),
+    .required("Password is required"),
 
   address: Yup.string()
     .required("Address is required")

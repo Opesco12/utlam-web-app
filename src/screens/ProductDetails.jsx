@@ -212,51 +212,6 @@ const ProductDetails = () => {
     fetchData();
   }, [fetchData]);
 
-  const handleInvestment = async () => {
-    if (!state.investmentAmount) {
-      toast.error("Please input amount");
-      return;
-    }
-
-    setState((prev) => ({ ...prev, processingInvestment: true }));
-    try {
-      let data;
-      if (state.isLiabilityProduct) {
-        data = await fixedIncomeSubscriptionOrder({
-          faceValue: state.investmentAmount,
-          currency: "NGN",
-          portfolioId: portfolioId,
-          securityProductId: state.liabilityProducts[0]?.securityProductId,
-          tenor: state.productTenors.find(
-            (t) => t.tenor === Number(state.selectedTenor)
-          )?.tenor,
-        });
-      } else {
-        data = await mutualFundSubscription({
-          portfolioId: portfolioId,
-          amount: state.investmentAmount,
-        });
-      }
-
-      if (data) {
-        toast.success(
-          `Successfully invested ${amountFormatter.format(
-            state.investmentAmount
-          )} in ${state.product?.portfolioName}`
-        );
-        navigate("/");
-      }
-    } catch (error) {
-      toast.error("Investment failed");
-    } finally {
-      setState((prev) => ({
-        ...prev,
-        processingInvestment: false,
-        isModalOpen: false,
-      }));
-    }
-  };
-
   const tenorOptions = state.productTenors.map((tenor) => ({
     label: `${tenor.tenor} Days`,
     value: tenor.tenor,
@@ -338,12 +293,11 @@ const ProductDetails = () => {
               isLiabilityProduct={state.isLiabilityProduct}
               tenorOptions={tenorOptions}
               onSubmit={(amount, tenor) => {
-                // setState((prev) => ({
-                //   ...prev,
-                //   investmentAmount: amount,
-                //   selectedTenor: tenor,
-                //   isModalOpen: true,
-                // }));
+                setState((prev) => ({
+                  ...prev,
+                  investmentAmount: amount,
+                  selectedTenor: tenor,
+                }));
                 navigate("/invest/investment_simulator", {
                   state: { principal: amount, portfolioId: portfolioId },
                 });
@@ -352,51 +306,6 @@ const ProductDetails = () => {
           </div>
         </div>
       </ContentBox>
-      <AppModal
-        title="Confirm Investment"
-        isOpen={state.isModalOpen}
-        onClose={() =>
-          !state.processingInvestment &&
-          setState((prev) => ({
-            ...prev,
-            isModalOpen: false,
-            isChecked: false,
-          }))
-        }
-      >
-        <StyledText style={{ marginTop: "20px" }}>
-          Redemptions during the Lock-up period will attract a 20% penalty on
-          accrued returns earned over the period. <br />
-          <StyledText style={{ marginTop: "20px" }}>
-            By tapping the "Make Payment" button, you agree to have the total
-            due deducted from your wallet balance to create this investment plan
-          </StyledText>
-        </StyledText>
-        <div style={{ marginTop: "20px", marginBottom: "20px" }}>
-          <Switch
-            checked={state.isChecked}
-            onChange={() =>
-              setState((prev) => ({ ...prev, isChecked: !prev.isChecked }))
-            }
-          />
-          <StyledText>Yes, I agree to the terms above</StyledText>
-        </div>
-        <Button
-          onClick={handleInvestment}
-          variant="contained"
-          style={{ backgroundColor: Colors.primary, height: "50px" }}
-          className="w-full"
-          disabled={!state.isChecked || state.processingInvestment}
-        >
-          <StyledText variant="semibold">
-            {state.processingInvestment ? (
-              <SmallLoadingSpinner color={Colors.white} />
-            ) : (
-              "Make Payment"
-            )}
-          </StyledText>
-        </Button>
-      </AppModal>
     </div>
   );
 };
