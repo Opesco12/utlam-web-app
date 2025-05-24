@@ -15,7 +15,7 @@ import {
 import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
 import AppButton from "../components/AppButton";
 
-const FileInput = ({ label, ...props }) => {
+const FileInput = ({ label, uploadButton, ...props }) => {
   const [field, meta, helpers] = useField(props);
 
   const handleChange = (event) => {
@@ -44,7 +44,7 @@ const FileInput = ({ label, ...props }) => {
           <div className="text-red-600 text-sm mt-1">{meta.error}</div>
         ) : null}
       </div>
-      {props.uploadButton}
+      {uploadButton}
     </div>
   );
 };
@@ -65,9 +65,9 @@ const KYC_1 = () => {
         const pendingDocs = await getPendingDocuments();
         const requiredDocs = pendingDocs.filter(
           (doc) =>
-            doc.document === "MEANS OF IDENTIFICATION" ||
-            doc.document === "PASSPORTS" ||
-            doc.document === "UTILITY BILL"
+            (doc.document === "MEANS OF IDENTIFICATION" && doc?.uploaded < 1) ||
+            (doc.document === "PASSPORTS" && doc?.uploaded < 1) ||
+            (doc.document === "UTILITY BILL" && doc?.uploaded < 1)
         );
         setPendingDocuments(requiredDocs);
       } catch (error) {
@@ -132,17 +132,6 @@ const KYC_1 = () => {
         titleCode: clientData?.titleCode,
         nin: values?.nin,
         bvn: values?.bvn,
-
-        // address2: userData?.address2,
-        // city: userData?.city,
-        // state: userData?.state,
-        // country: userData?.country,
-        // zipcode: userData?.zipcode,
-        // maritalStatus: values?.maritalStatus,
-        // occupation: values?.occupation,
-        // religion: values?.religion,
-        // mothersMaidenName: values?.mothersMaidenName,
-        // placeOfBirth: values?.placeOfBirth,
       });
       if (data) {
         toast.success("Data updated successfully");
@@ -234,21 +223,22 @@ const KYC_1 = () => {
                     </div>
                   )}
                 </div>
-                {!clientData?.nin && !clientData?.bvn && (
-                  <button
-                    type="submit"
-                    className="bg-primary w-full text-white py-2 px-4 rounded-md hover:bg-lightPrimary transition-colors mt-6"
-                    disabled={
-                      isSubmitting && clientData?.nin && clientData?.bvn
-                    }
-                  >
-                    {isSubmitting ? (
-                      <SmallLoadingSpinner color={Colors.white} />
-                    ) : (
-                      "Save"
-                    )}
-                  </button>
-                )}
+                {!clientData?.nin ||
+                  (!clientData?.bvn && (
+                    <button
+                      type="submit"
+                      className="bg-primary w-full text-white py-2 px-4 rounded-md hover:bg-lightPrimary transition-colors mt-6"
+                      disabled={
+                        isSubmitting && clientData?.nin && clientData?.bvn
+                      }
+                    >
+                      {isSubmitting ? (
+                        <SmallLoadingSpinner color={Colors.white} />
+                      ) : (
+                        "Save"
+                      )}
+                    </button>
+                  ))}
               </Form>
             )}
           </Formik>

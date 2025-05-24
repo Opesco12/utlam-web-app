@@ -21,6 +21,8 @@ import {
   RegisterStep2ValidationSchema,
 } from "../validationSchemas/userSchema";
 import StepIndicator from "../components/StepIndicator";
+import AppModal from "../components/AppModal";
+import Terms from "../components/Terms";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -33,6 +35,8 @@ const Register = () => {
   const [selectedState, setSelectedState] = useState("");
   const [selectedStateName, setSelectedStateName] = useState("");
   const [cities, setCities] = useState([]);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
@@ -50,6 +54,7 @@ const Register = () => {
     bvn: "",
     clientType: 1,
     referredBy: "",
+    agreedToTerms: false,
   });
 
   const genderOptions = [
@@ -380,6 +385,47 @@ const Register = () => {
                         label="Referral Code"
                       />
 
+                      <div className="flex items-start gap-3 mb-4">
+                        <input
+                          type="checkbox"
+                          id="agreedToTerms"
+                          checked={agreedToTerms}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setAgreedToTerms(checked);
+                            setFormData({
+                              ...formData,
+                              agreedToTerms: checked,
+                            });
+                            setFieldValue("agreedToTerms", checked);
+                          }}
+                          className="mt-1 w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                        />
+                        <label
+                          htmlFor="agreedToTerms"
+                          className="text-sm text-gray-700"
+                        >
+                          I agree to the{" "}
+                          <button
+                            type="button"
+                            onClick={() => setShowTermsModal(true)}
+                            className="text-primary cursor-pointer underline hover:no-underline"
+                          >
+                            Terms and Conditions
+                          </button>
+                        </label>
+                      </div>
+
+                      {/* Show validation error if exists */}
+                      {errors.agreedToTerms && touched.agreedToTerms && (
+                        <StyledText
+                          color="red"
+                          className="text-sm -mt-2 mb-4"
+                        >
+                          {errors.agreedToTerms}
+                        </StyledText>
+                      )}
+
                       <div className="flex gap-4 flex-col">
                         <AppButton
                           onClick={handlePrevStep}
@@ -422,6 +468,10 @@ const Register = () => {
           </div>
         </div>
       </div>
+      <Terms
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
     </div>
   );
 };

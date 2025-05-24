@@ -37,32 +37,37 @@ const Product = ({ product }) => {
         product.portfolioName
       )}.webp?alt=media&token=9fbb64ae-96b9-49e1-`
     : `https://firebasestorage.googleapis.com/v0/b/utlam-a1951.appspot.com/o/utlam-default.webp?alt=media&token=9fbb64ae-96b9-49e1-`;
+
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl transition-transform duration-300 hover:scale-105 hover:shadow-lg ">
-      <a href={`/invest/${product?.portfolioId}`}>
-        <img src={imageUrl} />
+    <div
+      className="flex flex-col overflow-hidden rounded-xl transition-transform duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
+      onClick={() => navigate(`/invest/${product?.portfolioId}`)}
+    >
+      <img
+        src={imageUrl}
+        alt={product?.portfolioId}
+      />
 
-        <div className="flex-1 bg-[#ECF9FF] p-2 md:p-5">
-          <StyledText
-            color={Colors.primary}
-            variant="semibold"
-          >
-            {product?.portfolioName}
+      <div className="flex-1 bg-[#ECF9FF] p-2 md:p-5">
+        <StyledText
+          color={Colors.primary}
+          variant="semibold"
+        >
+          {product?.portfolioName}
+        </StyledText>
+
+        <div className="mt-5 flex items-center gap-1 border-t border-[#73CAEE] pt-2">
+          <Moneys
+            size={18}
+            color={Colors.lightPrimary}
+            variant="Bold"
+          />
+
+          <StyledText type="label">
+            From {amountFormatter.format(product?.minimumInvestment)}
           </StyledText>
-
-          <div className="mt-5 flex items-center gap-1 border-t border-[#73CAEE] pt-2">
-            <Moneys
-              size={18}
-              color={Colors.lightPrimary}
-              variant="Bold"
-            />
-
-            <StyledText type="label">
-              From {amountFormatter.format(product?.minimumInvestment)}
-            </StyledText>
-          </div>
         </div>
-      </a>
+      </div>
     </div>
   );
 };

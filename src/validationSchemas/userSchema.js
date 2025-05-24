@@ -67,7 +67,7 @@ export const userRegisterSchema = Yup.object().shape({
   address: Yup.string()
     .required("Address is required")
     .min(5, "Address must be at least 5 characters")
-    .max(50, "Address must not exceed 100 characters"),
+    .max(255, "Address must not exceed 255 characters"),
 
   city: Yup.string()
     .required("City is required")
@@ -121,7 +121,7 @@ export const RegisterStep2ValidationSchema = Yup.object().shape({
   address: Yup.string()
     .required("Address is required")
     .min(5, "Address must be at least 5 characters")
-    .max(50, "Address must not exceed 100 characters"),
+    .max(255, "Address must not exceed 255 characters"),
   city: Yup.string()
     .required("City is required")
     .min(2, "City must be at least 2 characters")
@@ -135,6 +135,9 @@ export const RegisterStep2ValidationSchema = Yup.object().shape({
     .required("BVN is required")
     .matches(/^\d{11}$/, "BVN must be exactly 11 digits"),
   referredBy: Yup.string(),
+  agreedToTerms: Yup.boolean()
+    .oneOf([true], "You must agree to the terms and conditions")
+    .required("You must agree to the terms and conditions"),
 });
 
 export const passwordResetSchema = Yup.object().shape({

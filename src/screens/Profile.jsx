@@ -71,7 +71,6 @@ const Profile = () => {
     const fetchData = async () => {
       const clientPhoto = await fetchClientPhoto();
       setClientPhoto(clientPhoto?.photo);
-      // setIsLoading(false);
     };
 
     fetchData();
@@ -237,7 +236,8 @@ const Profile = () => {
             </StyledText>
             <StyledText
               type="label"
-              color={Colors.light}
+              color={Colors.white}
+              className={"opacity-75"}
             >
               {user?.email}
             </StyledText>

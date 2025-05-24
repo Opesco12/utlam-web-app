@@ -1,26 +1,35 @@
 import { useState } from "react";
+import { toast } from "sonner";
+import { Mail, PhoneCall } from "lucide-react";
+import { Copy, CopySuccess } from "iconsax-react";
 
 import HeaderText from "../components/HeaderText";
-import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 import { Colors } from "../constants/Colors";
-import { toast } from "sonner";
-import { sendMessageToClientManager } from "../api";
+import StyledText from "../components/StyledText";
 
 const ContactRelationShipManager = () => {
-  const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMailCopied, setIsMailCopied] = useState(false);
+  const [isPhoneCopied, setIsPhoneCopied] = useState(false);
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
+  const handleMailCopy = async (text) => {
     try {
-      const response = await sendMessageToClientManager({ message: message });
-      if (response) {
-        toast.success("Message sent successfully!");
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-    } finally {
-      setIsSubmitting(false);
+      await navigator.clipboard.writeText(text);
+      setIsMailCopied(true);
+      toast.success("Copied");
+      setTimeout(() => setIsMailCopied(false), 5000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
+
+  const handlePhoneCopy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setIsPhoneCopied(true);
+      toast.success("Copied");
+      setTimeout(() => setIsPhoneCopied(false), 5000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
     }
   };
 
@@ -28,29 +37,51 @@ const ContactRelationShipManager = () => {
     <div className="h-full w-full">
       <HeaderText>Contact Account Manager</HeaderText>
 
-      <div>
-        <textarea
-          id="complaint"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          required
-          rows={4}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-          placeholder="Please describe your message in detail..."
-        />
+      <div className="flex-1 space-y-4 rounded-xl bg-white p-4 md:p-8">
+        <div className="flex cursor-pointer items-center gap-3 rounded-lg p-2">
+          <Mail
+            size={20}
+            color={Colors.primary}
+          />
+          <StyledText color={Colors.primary}>
+            Email Address: support@utlam.com
+          </StyledText>
 
-        <button
-          type="submit"
-          className="bg-primary w-full text-white py-2 px-4 rounded-md hover:bg-lightPrimary transition-colors mt-6"
-          disabled={isSubmitting}
-          onClick={handleSubmit}
-        >
-          {isSubmitting ? (
-            <SmallLoadingSpinner color={Colors.white} />
+          {isMailCopied ? (
+            <CopySuccess
+              size={20}
+              color={Colors.primary}
+            />
           ) : (
-            "Send Message"
+            <Copy
+              size={20}
+              color={Colors.primary}
+              onClick={() => handleMailCopy("support@utlam.com")}
+            />
           )}
-        </button>
+        </div>
+
+        <div className="flex cursor-pointer items-center gap-3 rounded-lg p-2">
+          <PhoneCall
+            size={20}
+            color={Colors.primary}
+          />
+          <StyledText color={Colors.primary}>
+            Telephone Number: (+234) 903 - 0289 - 111
+          </StyledText>
+          {isPhoneCopied ? (
+            <CopySuccess
+              size={20}
+              color={Colors.primary}
+            />
+          ) : (
+            <Copy
+              size={20}
+              color={Colors.primary}
+              onClick={() => handlePhoneCopy("09030289111")}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

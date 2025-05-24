@@ -3,8 +3,12 @@ import { ArrowLeft, ArrowRight } from "iconsax-react";
 import { Colors } from "../constants/Colors";
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages === 0) {
+    return null;
+  }
+
   const getPageNumbers = () => {
-    const delta = window.innerWidth < 640 ? 1 : 2; // Show fewer pages on small screens
+    const delta = window.innerWidth < 640 ? 1 : 2;
     const range = [];
     for (
       let i = Math.max(2, currentPage - delta);

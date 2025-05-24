@@ -1,7 +1,7 @@
-import { Formik } from "formik";
+import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { Toaster, toast } from "sonner";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
@@ -15,6 +15,13 @@ import { obfuscateEmail } from "../helperFunctions/obfuscateEmail";
 
 const Login = () => {
   const navigate = useNavigate();
+
+  const handleKeyDown = (event, handleSubmit) => {
+    if (event.key === "Enter") {
+      handleSubmit();
+    }
+  };
+
   return (
     <div className="w-full h-screen bg-white">
       <Toaster position="top-right" />
@@ -27,7 +34,7 @@ const Login = () => {
         </div>
 
         <div className="flex h-screen items-center justify-center">
-          <div className=" flex flex-col gap-5  w-[90%] mx-auto lg:w-[60%]">
+          <div className="flex flex-col gap-5 w-[90%] mx-auto lg:w-[60%]">
             <img
               src="/images/utlam-logo.svg"
               alt="logo"
@@ -67,7 +74,7 @@ const Login = () => {
                     )}`
                   ) {
                     toast.error("Account is inactive. Please activate account");
-                    navigate("/account/2fa", {
+                    navigate("/account/activate", {
                       state: { email: email, header: "Activate Account" },
                     });
                   } else {
@@ -78,7 +85,10 @@ const Login = () => {
               }}
             >
               {({ handleChange, handleSubmit, isSubmitting }) => (
-                <>
+                <Form
+                  onKeyDown={(e) => handleKeyDown(e, handleSubmit)}
+                  className="flex flex-col gap-5"
+                >
                   <AppTextField
                     label="Email"
                     name="email"
@@ -105,7 +115,7 @@ const Login = () => {
                       "Login"
                     )}
                   </AppButton>
-                </>
+                </Form>
               )}
             </Formik>
             <StyledText style={{ textAlign: "center" }}>

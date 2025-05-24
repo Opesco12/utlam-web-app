@@ -63,13 +63,15 @@ const Portfolio = () => {
 
         validFixedIncomePortfolio.forEach((portfolio) => {
           portfolio.investments?.forEach((investment) => {
-            totalBalance += investment?.currentValue || 0;
+            totalBalance = totalBalance + (investment?.currentValue || 0);
           });
         });
 
         mutualFundBalances?.forEach((investment) => {
           totalBalance =
-            investment?.balance + (investment?.pendingDividendAmount || 0);
+            totalBalance +
+            investment?.balance +
+            (investment?.pendingDividendAmount || 0);
         });
 
         setPortfolioData({
@@ -126,7 +128,7 @@ const Portfolio = () => {
       </ContentBox>
 
       <ContentBox className="mt-[35px] bg-white">
-        <div className="grid gap-[15px] md:grid-cols-2">
+        <div className="grid gap-[15px] md:grid-cols-2 items-start">
           <PortfolioItem
             product={{
               portfolio: "Wallet",

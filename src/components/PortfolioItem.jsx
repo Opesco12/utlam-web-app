@@ -22,7 +22,7 @@ const PortfolioItem = ({ product }) => {
     }
   }, []);
   return (
-    <div className="border border-gray-300 p-[10px] rounded-lg bg-white hover:bg-border  cursor-pointer">
+    <div className="border border-gray-300 p-[10px] rounded-lg bg-white hover:bg-gray-100  cursor-pointer">
       <div
         onClick={() => {
           product?.portfolio !== "Wallet" &&
@@ -65,6 +65,13 @@ const PortfolioItem = ({ product }) => {
                   : amountFormatter.format(product?.balance)}
               </StyledText>
             </div>
+            {!product?.portfolioType &&
+              product?.portfolio !== "Wallet" &&
+              product?.pendingDividendAmount && (
+                <p className="text-light text-sm font-semibold">
+                  Pending Dividend: {product?.pendingDividendAmount}
+                </p>
+              )}
           </div>
         </div>
         <ArrowCircleRight2
@@ -74,16 +81,21 @@ const PortfolioItem = ({ product }) => {
         />
       </div>
       {!product?.portfolioType && product?.portfolio !== "Wallet" && (
-        <p
-          className="text-right underline text-sm text-lightPrimary cursor-pointer hover:text-primary"
-          onClick={() =>
-            navigate(`/portfolio/${_.kebabCase(product.portfolio)}/statement`, {
-              state: { balance: product?.balance },
-            })
-          }
-        >
-          View Statement
-        </p>
+        <>
+          <p
+            className="text-right underline text-sm text-lightPrimary cursor-pointer hover:text-primary"
+            onClick={() =>
+              navigate(
+                `/portfolio/${_.kebabCase(product.portfolio)}/statement`,
+                {
+                  state: { balance: product?.balance },
+                }
+              )
+            }
+          >
+            View Statement
+          </p>
+        </>
       )}
     </div>
   );

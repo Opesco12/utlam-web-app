@@ -45,7 +45,7 @@ const HomeScreen = () => {
     loading: true,
     userBalance: null,
     name: null,
-    hideBalance: false,
+    hideBalance: localStorage.getItem("hideBalance") === "true",
     isDepositModalOpen: false,
     isWithdrawalModalOpen: false,
     isPinModalOpen: false,
@@ -66,7 +66,11 @@ const HomeScreen = () => {
   const pinRefs = useRef([]);
 
   const toggleHideBalance = () =>
-    setState((prev) => ({ ...prev, hideBalance: !prev.hideBalance }));
+    setState((prev) => {
+      const newHideBalance = !prev.hideBalance;
+      localStorage.setItem("hideBalance", newHideBalance);
+      return { ...prev, hideBalance: newHideBalance };
+    });
 
   const toggleDepositModal = (isOpen) =>
     setState((prev) => ({
@@ -267,7 +271,9 @@ const HomeScreen = () => {
         });
         mutualFundBalances?.forEach((investment) => {
           portfolioBalance =
-            investment?.balance + (investment?.pendingDividendAmount || 0);
+            portfolioBalance +
+            investment?.balance +
+            (investment?.pendingDividendAmount || 0);
         });
 
         setState((prev) => ({

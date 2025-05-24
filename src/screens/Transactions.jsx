@@ -7,10 +7,11 @@ import StyledText from "../components/StyledText";
 import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
 import { amountFormatter } from "../helperFunctions/amountFormatter";
 import { Colors } from "../constants/Colors";
-
-import { getTransactions, getPendingWithdrawals } from "../api";
 import HeaderText from "../components/HeaderText";
 import TransactionSummaryModal from "../components/TransactionSummaryModal";
+
+import { getTransactions, getPendingWithdrawals } from "../api";
+import { FileX } from "lucide-react";
 
 const Tab = ({ active, onClick, children }) => {
   return (
@@ -116,7 +117,7 @@ const Transactions = () => {
             active={activeTab === "pendingTransactions"}
             onClick={() => setActiveTab("pendingTransactions")}
           >
-            Pending Transactions
+            Pending Withdrawals
           </Tab>
         </div>
       </div>
@@ -129,16 +130,27 @@ const Transactions = () => {
             onChange={handleMonthYearChange}
           />
           <div className="">
-            {transactions?.map((transaction, index) => (
-              <TransactionItem
-                transaction={transaction}
-                key={index}
-                onClick={() => {
-                  setSelectedTransaction(transaction);
-                  setIsModalOpen(true);
-                }}
-              />
-            ))}
+            {transactions < 1 ? (
+              <div className="flex flex-col items-center justify-center text-gray-300 h-30">
+                <FileX
+                  color="#d1d5db"
+                  className="text-gray-300"
+                  size={50}
+                />
+                <p>No Transactions found</p>
+              </div>
+            ) : (
+              transactions?.map((transaction, index) => (
+                <TransactionItem
+                  transaction={transaction}
+                  key={index}
+                  onClick={() => {
+                    setSelectedTransaction(transaction);
+                    setIsModalOpen(true);
+                  }}
+                />
+              ))
+            )}
           </div>
           <Pagination
             currentPage={currentPage}
@@ -174,7 +186,6 @@ const Transactions = () => {
 
 const TransactionItem = ({ transaction, onClick }) => {
   const date = new Date(transaction?.valueDate).toDateString();
-  const navigate = useNavigate();
   return (
     <div
       onClick={onClick}
@@ -211,6 +222,11 @@ const TransactionItem = ({ transaction, onClick }) => {
         >
           {amountFormatter.format(transaction?.amount)}
         </StyledText>
+        {transaction?.status && (
+          <p className="text-sm bg-yellow-100 text-yellow-400 px-2 py-1 rounded-3xl">
+            {transaction?.status}
+          </p>
+        )}
       </div>
     </div>
   );

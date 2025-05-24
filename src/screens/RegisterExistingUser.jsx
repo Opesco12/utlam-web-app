@@ -71,7 +71,7 @@ const RegisterExistingUser = () => {
                   });
 
                   if (userData) {
-                    navigate("/account/2fa", {
+                    navigate("/account/activate", {
                       state: { email: email, header: "Activate Account" },
                     });
                   }

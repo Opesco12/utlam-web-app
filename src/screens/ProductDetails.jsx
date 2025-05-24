@@ -27,6 +27,7 @@ import {
   fixedIncomeSubscriptionOrder,
 } from "../api";
 import { amountFormatter } from "../helperFunctions/amountFormatter";
+import Tooltip from "../components/Tooltip";
 
 const validationSchema = Yup.object().shape({
   amount: Yup.number()
@@ -35,7 +36,7 @@ const validationSchema = Yup.object().shape({
     .positive("Amount must be positive"),
 });
 
-const DetailsItem = ({ text, detail, icon }) => (
+const DetailsItem = ({ text, detail, icon, tooltipContent }) => (
   <div className="w-1/2 flex flex-col items-center">
     <div className="flex gap-3 items-center">
       {icon}
@@ -46,13 +47,20 @@ const DetailsItem = ({ text, detail, icon }) => (
         {text}
       </StyledText>
     </div>
-    <StyledText
-      type="subheading"
-      variant="medium"
-      color={Colors.text}
-    >
-      {detail}
-    </StyledText>
+    <div className="flex items-center">
+      <StyledText
+        type="subheading"
+        variant="medium"
+        color={Colors.text}
+        style={{ marginRight: "5px" }}
+      >
+        {detail}
+      </StyledText>
+      <Tooltip
+        position="top"
+        content={tooltipContent}
+      />
+    </div>
   </div>
 );
 
@@ -281,10 +289,11 @@ const ProductDetails = () => {
                     size={25}
                   />
                 }
-                text="Penalty Rate"
+                text="Penalty Fee"
                 detail={`${state.product.earlyRedemptionPenaltyRate}%`}
               />
             </div>
+            {/* <p className="text-[#808080]">{state?.product?.productMandate}</p> */}
           </div>
           <div className="flex flex-col gap-5 w-[100%] mt-[50px] md:w-[40%] md:mt-[0px]">
             <InvestmentForm

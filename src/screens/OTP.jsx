@@ -5,7 +5,7 @@ import OtpInput from "../components/Otp_Input";
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
 import { obfuscateEmail } from "../helperFunctions/obfuscateEmail";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { activateAccount, login2fa, resnedActivationCode } from "../api";
 import { userStorage } from "../storage/userStorage";
 import { keys } from "../storage/kyes";
@@ -13,30 +13,56 @@ import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 
 import { useAuth } from "../context/AuthProvider";
 import { Toaster, toast } from "sonner";
+import axios from "axios";
 
 const Otp = () => {
   const { setIsAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { email, header } = location.state;
+  const stateData = location.state;
 
   const [code, setCode] = useState(Array(6).fill(""));
   const [loading, setLoading] = useState(false);
 
+  // useEffect(() => {
+  //   const fetchSmileLink = async () => {
+  //     // getting the verification link
+  //     // const response = await axios.post(
+  //     //   "http://localhost:3000/initiate-smilelink",
+  //     //   {
+  //     //     user_id: "oyelekemmanuel@gmail.com" + "_" + Date.now(),
+  //     //   }
+  //     // );
+
+  //     // checking if the verification was succesful
+  //     const response = await axios.get(
+  //       "http://localhost:3000/status/d9ec8eaa-f94a-4fc6-92ff-9d04c16381f2"
+  //     );
+
+  //     console.log("response from smilelink", response);
+  //   };
+
+  //   fetchSmileLink();
+  // }, []);
+
   const handleSubmit = async () => {
     setLoading(true);
-    if (header) {
+    if (stateData?.header) {
       const info = {
-        username: email,
+        username: stateData?.email,
         securityCode: code.join(""),
       };
+
       const data = await activateAccount(info);
       if (data) {
         toast.success("Your account has been successfully activated");
         navigate("/login");
       }
     } else {
-      const data = await login2fa({ email: email, code: code.join("") });
+      const data = await login2fa({
+        email: stateData?.email,
+        code: code.join(""),
+      });
       if (data) {
         toast.success("Login Successful");
         userStorage.setItem(keys.user, data);
@@ -53,6 +79,12 @@ const Otp = () => {
     setLoading(false);
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" && code.join("").length === 6) {
+      handleSubmit();
+    }
+  };
+
   const resendActivationCode = async (email) => {
     setLoading(true);
     const data = await resnedActivationCode({ userName: email });
@@ -63,7 +95,10 @@ const Otp = () => {
   };
 
   return (
-    <div className="w-full h-screen">
+    <div
+      className="w-full h-screen"
+      onKeyDown={handleKeyDown}
+    >
       <Toaster position="top-right" />
       <div className="grid md:grid-cols-2">
         <div className="bg-primary h-screen hidden md:block">
@@ -81,7 +116,7 @@ const Otp = () => {
                 variant="semibold"
                 color={Colors.primary}
               >
-                {header ? header : "OTP Verification"}
+                {stateData?.header ? stateData?.header : "OTP Verification"}
               </StyledText>
               <br />
               <StyledText
@@ -90,7 +125,8 @@ const Otp = () => {
                 type="body"
               >
                 We have sent a security code to your email address{" "}
-                {obfuscateEmail(email)}. Enter the code below to verify
+                {stateData?.email && obfuscateEmail(stateData?.email)}. Enter
+                the code below to verify
               </StyledText>
             </div>
 
@@ -109,13 +145,13 @@ const Otp = () => {
               </AppButton>
             )}
 
-            {header && (
+            {stateData?.header && (
               <div className="my-[10px] text-center">
                 <StyledText color={Colors.light}>
                   Didn't get a code?{"  "}
                   <span
                     className="text-primary font-semibold"
-                    onClick={() => resendActivationCode(email)}
+                    onClick={() => resendActivationCode(stateData?.email)}
                   >
                     Resend Code
                   </span>
