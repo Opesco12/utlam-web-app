@@ -47,7 +47,7 @@ const DetailsItem = ({ text, detail, icon, tooltipContent }) => (
         {text}
       </StyledText>
     </div>
-    <div className="flex items-center">
+    <div className="flex items-center space-x-4">
       <StyledText
         type="subheading"
         variant="medium"
@@ -255,6 +255,9 @@ const ProductDetails = () => {
                 }
                 text="Annualized Yield"
                 detail={`${state.product.return}%`}
+                tooltipContent={
+                  "The annual rate of return on an investment, expressed as a percentage"
+                }
               />
               <DetailsItem
                 icon={
@@ -266,6 +269,9 @@ const ProductDetails = () => {
                 }
                 text="Minimum Investment"
                 detail={amountFormatter.format(state.product.minimumInvestment)}
+                tooltipContent={
+                  "The smallest amount of money required to start investing"
+                }
               />
             </div>
             <hr className="border-gray-300" />
@@ -280,6 +286,9 @@ const ProductDetails = () => {
                 }
                 text="Minimum Holding Period"
                 detail={`${state.product.minimumHoldingPeriod} Days`}
+                tooltipContent={
+                  "The shortest duration you must hold an investment before liquidation"
+                }
               />
               <DetailsItem
                 icon={
@@ -291,6 +300,9 @@ const ProductDetails = () => {
                 }
                 text="Penalty Fee"
                 detail={`${state.product.earlyRedemptionPenaltyRate}%`}
+                tooltipContent={
+                  "A charge incurred for early withdrawal/pre-liquidation"
+                }
               />
             </div>
             {/* <p className="text-[#808080]">{state?.product?.productMandate}</p> */}
