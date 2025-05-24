@@ -167,7 +167,6 @@ const KYC_1 = () => {
       <div className="bg-white p-6 rounded-lg shadow-md">
         {activeTab === "identification" && (
           <Formik
-            enableReinitialize={true}
             initialValues={{
               nin: clientData?.nin || "",
               bvn: clientData?.bvn || "",
@@ -179,6 +178,7 @@ const KYC_1 = () => {
               handleUpdateInfo(values);
               setSubmitting(false);
             }}
+            enableReinitialize={true}
           >
             {({ isSubmitting, errors }) => (
               <Form>
@@ -223,22 +223,21 @@ const KYC_1 = () => {
                     </div>
                   )}
                 </div>
-                {!clientData?.nin ||
-                  (!clientData?.bvn && (
-                    <button
-                      type="submit"
-                      className="bg-primary w-full text-white py-2 px-4 rounded-md hover:bg-lightPrimary transition-colors mt-6"
-                      disabled={
-                        isSubmitting && clientData?.nin && clientData?.bvn
-                      }
-                    >
-                      {isSubmitting ? (
-                        <SmallLoadingSpinner color={Colors.white} />
-                      ) : (
-                        "Save"
-                      )}
-                    </button>
-                  ))}
+                {(clientData?.nin === null || clientData?.bvn === null) && (
+                  <button
+                    type="submit"
+                    className="bg-primary w-full text-white py-2 px-4 rounded-md hover:bg-lightPrimary transition-colors mt-6"
+                    disabled={
+                      isSubmitting && clientData?.nin && clientData?.bvn
+                    }
+                  >
+                    {isSubmitting ? (
+                      <SmallLoadingSpinner color={Colors.white} />
+                    ) : (
+                      "Save"
+                    )}
+                  </button>
+                )}
               </Form>
             )}
           </Formik>
