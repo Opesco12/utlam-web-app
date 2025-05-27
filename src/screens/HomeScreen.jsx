@@ -39,6 +39,7 @@ import { amountFormatter } from "../helperFunctions/amountFormatter";
 import { userStorage } from "../storage/userStorage";
 import { keys } from "../storage/kyes";
 import HomeScreenSkeleton from "../components/skeletons/HomeScreenSkeleton";
+import SwipeableViews from "react-swipeable-views";
 
 const HomeScreen = () => {
   const [state, setState] = useState({
@@ -60,6 +61,7 @@ const HomeScreen = () => {
       fixedIncomePortfolio: [],
       portfolioBalance: 0,
     },
+    slideIndex: 0, // New state for tracking the current slide
   });
 
   const navigate = useNavigate();
@@ -316,79 +318,165 @@ const HomeScreen = () => {
         Hello, {state.name || ""}
       </StyledText>
 
+      {/* Mobile Display */}
       <div className="flex justify-between flex-wrap flex-col md:flex-col">
-        <ContentBox
-          backgroundColor={Colors.primary}
-          className="w-full md:px-[30px] md:hidden"
-        >
-          <div className="flex items-center gap-2">
-            <EmptyWallet
-              variant="Bold"
-              size={20}
-              color={Colors.white}
-            />
-            <StyledText color={Colors.white}>Wallet Balance</StyledText>
-          </div>
-
-          <div className="flex items-center justify-between mb-[40px] mt-[15px]">
-            <StyledText
-              type="subheading"
-              variant="semibold"
-              color={Colors.white}
+        <div className="relative">
+          <SwipeableViews
+            index={state.slideIndex}
+            onChangeIndex={(index) =>
+              setState((prev) => ({ ...prev, slideIndex: index }))
+            }
+          >
+            <ContentBox
+              backgroundColor={Colors.primary}
+              className="w-full md:px-[30px] md:hidden"
             >
-              {state.hideBalance
-                ? "₦*******"
-                : amountFormatter.format(state.userBalance?.amount)}
-            </StyledText>
-            {state.hideBalance ? (
-              <EyeSlash
-                size={25}
-                color={Colors.white}
-                variant="Bold"
-                onClick={toggleHideBalance}
-              />
-            ) : (
-              <Eye
-                size={25}
-                color={Colors.white}
-                variant="Bold"
-                onClick={toggleHideBalance}
-              />
-            )}
-          </div>
-
-          <div className="flex flex-row justify-between">
-            <div
-              className="w-[48%] cursor-pointer"
-              onClick={() => toggleDepositModal(true)}
-            >
-              <AppRippleButton backgroundColor={Colors.lightPrimary}>
-                <ReceiveSquare2
-                  size={25}
+              <div className="flex items-center gap-1">
+                <EmptyWallet
+                  variant="Bold"
+                  size={18}
                   color={Colors.white}
-                  variant="Bold"
                 />
-                <StyledText variant="medium">Deposit</StyledText>
-              </AppRippleButton>
-            </div>
+                <StyledText color={Colors.white}>Wallet Balance</StyledText>
+              </div>
 
-            <div
-              className="w-[48%] cursor-pointer"
-              onClick={() =>
-                setState((prev) => ({ ...prev, isWithdrawalModalOpen: true }))
-              }
+              <div className="flex items-center justify-between mb-[40px] mt-[15px]">
+                <StyledText
+                  type="subheading"
+                  variant="semibold"
+                  color={Colors.white}
+                >
+                  {state.hideBalance
+                    ? "₦*******"
+                    : amountFormatter.format(state.userBalance?.amount)}
+                </StyledText>
+                {state.hideBalance ? (
+                  <EyeSlash
+                    size={25}
+                    color={Colors.white}
+                    variant="Bold"
+                    onClick={toggleHideBalance}
+                  />
+                ) : (
+                  <Eye
+                    size={25}
+                    color={Colors.white}
+                    variant="Bold"
+                    onClick={toggleHideBalance}
+                  />
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 justify-between">
+                <div
+                  className="cursor-pointer"
+                  onClick={() => toggleDepositModal(true)}
+                >
+                  <AppRippleButton backgroundColor={Colors.lightPrimary}>
+                    <ReceiveSquare2
+                      size={25}
+                      color={Colors.white}
+                      variant="Bold"
+                    />
+                    <StyledText variant="medium">Deposit</StyledText>
+                  </AppRippleButton>
+                </div>
+
+                <div
+                  className="cursor-pointer"
+                  onClick={() =>
+                    setState((prev) => ({
+                      ...prev,
+                      isWithdrawalModalOpen: true,
+                    }))
+                  }
+                >
+                  <AppRippleButton backgroundColor={Colors.white}>
+                    <TransmitSqaure2
+                      size={25}
+                      color={Colors.primary}
+                      variant="Bold"
+                    />
+                    <StyledText variant="medium">Withdraw</StyledText>
+                  </AppRippleButton>
+                </div>
+              </div>
+            </ContentBox>
+
+            <ContentBox
+              backgroundColor={Colors.lightPrimary}
+              className="w-full md:px-[30px] md:hidden"
             >
-              <AppRippleButton backgroundColor={Colors.white}>
-                <TransmitSqaure2
-                  size={25}
-                  color={Colors.primary}
+              <div className="flex items-center gap-1">
+                <EmptyWallet
                   variant="Bold"
+                  size={18}
+                  color={Colors.white}
                 />
-                <StyledText variant="medium">Withdraw</StyledText>
-              </AppRippleButton>
-            </div>
+                <StyledText color={Colors.white}>Portfolio Balance</StyledText>
+              </div>
+
+              <div className="flex items-center justify-between mb-[40px] mt-[15px]">
+                <StyledText
+                  type="subheading"
+                  variant="semibold"
+                  color={Colors.white}
+                >
+                  {state.hideBalance
+                    ? "₦*******"
+                    : amountFormatter.format(
+                        state.portfolioData.portfolioBalance
+                      )}
+                </StyledText>
+                {state.hideBalance ? (
+                  <EyeSlash
+                    size={25}
+                    color={Colors.white}
+                    variant="Bold"
+                    onClick={toggleHideBalance}
+                  />
+                ) : (
+                  <Eye
+                    size={25}
+                    color={Colors.white}
+                    variant="Bold"
+                    onClick={toggleHideBalance}
+                  />
+                )}
+              </div>
+
+              <button
+                onClick={() => navigate("/portfolio")}
+                className="w-full border border-white py-2 px-4 rounded-lg text-white flex items-center gap-1 justify-center hover:bg-white/20 transition-colors"
+              >
+                <Briefcase
+                  variant="Bold"
+                  color={Colors.white}
+                  size={25}
+                />
+                View Portfolio
+              </button>
+            </ContentBox>
+          </SwipeableViews>
+
+          <div className="flex justify-center mt-4 space-x-2 md:hidden">
+            {[0, 1].map((index) => (
+              <div
+                onClick={() =>
+                  setState((prev) => ({ ...prev, slideIndex: index }))
+                }
+                key={index}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  state.slideIndex === index
+                    ? "bg-primary scale-125"
+                    : "bg-gray-300"
+                }`}
+              />
+            ))}
           </div>
-        </ContentBox>
+        </div>
+
+        {/* End of Mobile Display */}
 
         <div className="hidden rounded-xl overflow-hidden md:grid md:grid-cols-2">
           <BalanceCard
@@ -411,7 +499,10 @@ const HomeScreen = () => {
               </button>
               <button
                 onClick={() =>
-                  setState((prev) => ({ ...prev, isWithdrawalModalOpen: true }))
+                  setState((prev) => ({
+                    ...prev,
+                    isWithdrawalModalOpen: true,
+                  }))
                 }
                 className="border border-white py-2 px-4 rounded-lg text-white flex items-center gap-1 justify-start w-fit hover:bg-white/20 transition-colors"
               >
@@ -552,7 +643,7 @@ const HomeScreen = () => {
                 <div className="mb-4">
                   <label
                     htmlFor="amount"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700 mb-1 text-left"
                   >
                     Amount
                   </label>
@@ -575,7 +666,7 @@ const HomeScreen = () => {
                 <div className="mb-4">
                   <label
                     htmlFor="bankName"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700 mb-1 text-left"
                   >
                     Bank Name
                   </label>
@@ -591,7 +682,7 @@ const HomeScreen = () => {
                 <div className="mb-4">
                   <label
                     htmlFor="accountNo"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700 mb-1 text-left"
                   >
                     Account Number
                   </label>

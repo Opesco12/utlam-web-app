@@ -11,6 +11,8 @@ const PortfolioItem = ({ product }) => {
   const navigate = useNavigate();
   const [fixedIncomeBalance, setFixedIncomeBalance] = useState(0);
 
+  console.log("Portfolio item: ", product);
+
   useEffect(() => {
     if (product?.portfolioType === 9) {
       var balance = 0;
@@ -67,9 +69,10 @@ const PortfolioItem = ({ product }) => {
             </div>
             {!product?.portfolioType &&
               product?.portfolio !== "Wallet" &&
-              product?.pendingDividendAmount && (
+              product?.pendingDividendAmount !== null && (
                 <p className="text-light text-sm font-semibold">
-                  Pending Dividend: {product?.pendingDividendAmount}
+                  Pending Dividend:{" "}
+                  {amountFormatter.format(product?.pendingDividendAmount)}
                 </p>
               )}
           </div>

@@ -17,11 +17,13 @@ import {
   getTenor,
   mutualFundSubscription,
   fixedIncomeSubscriptionOrder,
+  getWalletBalance,
 } from "../api";
 import { toast } from "sonner";
 
 const InvestmentSimulator = () => {
   const [investibleProducts, setInvestibleProducts] = useState([]);
+  const [userBalance, setUserBalance] = useState(0);
   const [productOptions, setProductOptions] = useState([]);
   const [tenorOptions, setTenorOptions] = useState([]);
   const [selectedTenorInterestRate, setSelectedTenorInterestRate] =
@@ -39,16 +41,21 @@ const InvestmentSimulator = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const userBalance = await getWalletBalance();
+        setUserBalance(userBalance[0]?.amount);
+
         const data = await getProducts();
         setInvestibleProducts(data);
         setProductOptions(
-          data.map((item) => ({
-            label: item.portfolioName,
-            value: item.portfolioId,
-            isLiabilityProduct: item?.portfolioType === 9 ? true : false,
-            minimumHoldingPeriod: item?.minimumHoldingPeriod,
-            return: item?.return,
-          }))
+          data
+            // .filter((item) => item.portfolioType === 9)
+            .map((item) => ({
+              label: item.portfolioName,
+              value: item.portfolioId,
+              isLiabilityProduct: true,
+              minimumHoldingPeriod: item?.minimumHoldingPeriod,
+              return: item?.return,
+            }))
         );
       } catch (error) {
         console.error("Error fetching investment products:", error);
@@ -118,12 +125,30 @@ const InvestmentSimulator = () => {
   const validationSchema = Yup.object().shape({
     amount: Yup.number()
       .required("Principal is required")
-      .min(1, "Principal must be greater than 0"),
+      .min(1, "Principal must be greater than 0")
+      .test(
+        "max-user-balance",
+        "Amount cannot exceed your wallet balance",
+        function (value) {
+          if (value === undefined || value === null) return false;
+          return Number(value) <= userBalance;
+        }
+      ),
     portfolioId: Yup.string().required("Select a product"),
-    tenor: Yup.string().when("portfolioId", {
-      is: (portfolioId) => isLiabilityProduct(portfolioId),
-      then: Yup.string(),
-    }),
+    tenor: Yup.string().test(
+      "tenor-required-if-liability",
+      "Select a tenor",
+      function (value) {
+        const { portfolioId } = this.parent;
+        const selectedProduct = productOptions.find(
+          (product) => String(product.value) === String(portfolioId)
+        );
+        if (selectedProduct?.isLiabilityProduct) {
+          return !!value;
+        }
+        return true;
+      }
+    ),
   });
 
   const handleLiabilityProductInvestment = async (
@@ -185,13 +210,18 @@ const InvestmentSimulator = () => {
   };
 
   const handleInvestment = async (amount, portfolioId, tenor) => {
-    setState((prev) => ({ ...prev, processingInvestment: true }));
+    setState((prev) => ({
+      ...prev,
+      processingInvestment: true,
+      isModalOpen: true,
+    }));
 
     if (isLiabilityProduct(portfolioId) === true) {
       await handleLiabilityProductInvestment(amount, portfolioId, tenor);
-    } else {
-      await handleMutualFundInvestment(amount, portfolioId);
     }
+    //  else {
+    //   await handleMutualFundInvestment(amount, portfolioId);
+    // }
 
     setState((prev) => ({
       ...prev,
@@ -258,6 +288,7 @@ const InvestmentSimulator = () => {
                       className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                       onChange={(e) => {
                         const portfolioId = e.target.value;
+                        console.log("Selected portfolioId: ", portfolioId);
                         setFieldValue("portfolioId", portfolioId);
                         setFieldValue("tenor", "");
                         if (portfolioId) {
@@ -281,16 +312,16 @@ const InvestmentSimulator = () => {
                     {errors.portfolioId && touched.portfolioId && (
                       <div style={{ color: "red" }}>{errors.portfolioId}</div>
                     )}
-                    {values?.portfolioId &&
+                    {/* {values?.portfolioId &&
                       isLiabilityProduct(values?.portfolioId) === false && (
                         <p className="text-light-primary text-sm">
                           Returns {getMutualFundInterest(values?.portfolioId)}%
                         </p>
-                      )}
+                      )} */}
                   </div>
 
                   {values?.portfolioId !== "" &&
-                    isLiabilityProduct(values?.portfolioId) !== false && (
+                    isLiabilityProduct(values?.portfolioId) === true && (
                       <div className="flex flex-col">
                         <label className="mb-1 text-sm font-medium">
                           Desired Tenor
@@ -341,15 +372,10 @@ const InvestmentSimulator = () => {
                       <p className="text-sm font-semibold">
                         {values?.amount === "" && values?.tenor === ""
                           ? amountFormatter.format(0)
-                          : isLiabilityProduct(values?.portfolioId) === true
-                          ? amountFormatter.format(
+                          : isLiabilityProduct(values?.portfolioId) === true &&
+                            amountFormatter.format(
                               Number(values?.amount) *
                                 (selectedTenorInterestRate / 100)
-                            )
-                          : amountFormatter.format(
-                              Number(values?.amount) *
-                                (getMutualFundInterest(values?.portfolioId) /
-                                  100)
                             )}
                       </p>
                     </div>
@@ -367,8 +393,9 @@ const InvestmentSimulator = () => {
                       </p>
                     </div>
 
-                    {isLiabilityProduct(values?.portfolioId)
-                      ? values?.tenor !== "" && (
+                    {
+                      isLiabilityProduct(values?.portfolioId) &&
+                        values?.tenor !== "" && (
                           <div className="p-2 flex items-center justify-between">
                             <p className="text-light-primary">Maturity Date</p>
                             <p className="text-sm font-semibold">
@@ -376,16 +403,17 @@ const InvestmentSimulator = () => {
                             </p>
                           </div>
                         )
-                      : values?.portfolioId && (
-                          <div className="p-2 flex items-center justify-between">
-                            <p className="text-light-primary">Maturity Date</p>
-                            <p className="text-sm font-semibold">
-                              {addDaysToDate(
-                                getMinimumHoldingPeriod(values?.portfolioId)
-                              )}
-                            </p>
-                          </div>
-                        )}
+                      // : values?.portfolioId && (
+                      //     <div className="p-2 flex items-center justify-between">
+                      //       <p className="text-light-primary">Maturity Date</p>
+                      //       <p className="text-sm font-semibold">
+                      //         {addDaysToDate(
+                      //           getMinimumHoldingPeriod(values?.portfolioId)
+                      //         )}
+                      //       </p>
+                      //     </div>
+                      //   )
+                    }
                   </div>
                 </div>
               </div>

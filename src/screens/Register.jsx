@@ -1,12 +1,9 @@
-import * as Yup from "yup";
 import { Formik } from "formik";
 import { Toaster, toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Country, State, City } from "country-state-city";
+import { Country, State } from "country-state-city";
 import csc from "countries-states-cities";
-import "@smileid/web-components/smart-camera-web";
-import axios from "axios";
 
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
@@ -21,20 +18,17 @@ import {
   RegisterStep2ValidationSchema,
 } from "../validationSchemas/userSchema";
 import StepIndicator from "../components/StepIndicator";
-import AppModal from "../components/AppModal";
 import Terms from "../components/Terms";
 
 const Register = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [gender, setGender] = useState("");
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCountryIso2, setSelectedCountryIso2] = useState("");
   const [states, setStates] = useState([]);
   const [selectedState, setSelectedState] = useState("");
   const [selectedStateName, setSelectedStateName] = useState("");
-  const [cities, setCities] = useState([]);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -93,19 +87,15 @@ const Register = () => {
     }
   }, [selectedCountry]);
 
-  useEffect(() => {
-    if (selectedCountryIso2 && selectedState) {
-      const citiesList = City.getCitiesOfState(
-        selectedCountryIso2,
-        selectedState
-      );
-      setCities(citiesList);
+  const handleNextStep = async (values, validateForm) => {
+    const errors = await validateForm(values);
+    if (!errors || Object.keys(errors).length === 0) {
+      setFormData({ ...formData, ...values });
+      setStep(2);
+    } else {
+      toast.error("Please fill in all required fields correctly.");
+      return;
     }
-  }, [selectedCountryIso2, selectedState]);
-
-  const handleNextStep = (values) => {
-    setFormData({ ...formData, ...values });
-    setStep(2);
   };
 
   const handlePrevStep = () => {
@@ -154,7 +144,6 @@ const Register = () => {
                 </StyledText>
               </div>
 
-              {/* Step Indicator */}
               <StepIndicator currentStep={step} />
 
               {step === 1 ? (
@@ -162,7 +151,10 @@ const Register = () => {
                   validationSchema={RegisterStep1ValidationSchema}
                   initialValues={formData}
                   validateOnChange={false}
-                  validateOnBlur={false}
+                  validateOnBlur={true}
+                  onSubmit={(values, { validateForm }) =>
+                    handleNextStep(values, validateForm)
+                  }
                 >
                   {({
                     handleChange,
@@ -170,6 +162,7 @@ const Register = () => {
                     setFieldValue,
                     errors,
                     values,
+                    validateForm,
                   }) => (
                     <>
                       <AppTextField
@@ -197,7 +190,6 @@ const Register = () => {
                         name="gender"
                         options={genderOptions}
                         onValueChange={(value) => {
-                          setGender(value);
                           setFormData({ ...formData, gender: value });
                           setFieldValue("gender", value);
                         }}
@@ -222,7 +214,10 @@ const Register = () => {
                         label="Confirm Password"
                         type="password"
                       />
-                      <AppButton onClick={() => handleNextStep(values)}>
+                      <AppButton
+                        onClick={handleSubmit}
+                        type={"submit"}
+                      >
                         Continue
                       </AppButton>
 
@@ -309,7 +304,7 @@ const Register = () => {
                     setSubmitting(false);
                   }}
                   validateOnChange={false}
-                  validateOnBlur={false}
+                  validateOnBlur={true}
                 >
                   {({
                     handleChange,
@@ -350,18 +345,13 @@ const Register = () => {
                         }}
                         label="State"
                       />
-                      <AppSelect
+
+                      <AppTextField
                         name="city"
-                        options={cities.map((city) => ({
-                          label: city.name,
-                          value: city.name,
-                        }))}
-                        onValueChange={(value) => {
-                          setFormData({ ...formData, city: value });
-                          setFieldValue("city", value);
-                        }}
+                        onChange={handleChange("city")}
                         label="City"
                       />
+
                       <AppTextField
                         name="address"
                         onChange={handleChange("address")}

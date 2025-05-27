@@ -12,7 +12,7 @@ import { amountFormatter } from "../helperFunctions/amountFormatter";
 import { getMutualFundStatement, getProducts } from "../api";
 
 const MutualFundStatement = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [statement, setStatement] = useState([]);
   const navigate = useNavigate();
   const { portfolioName } = useParams();
@@ -20,8 +20,6 @@ const MutualFundStatement = () => {
   const balance = location.state.balance;
 
   const findProduct = async () => {
-    setLoading(true);
-
     const products = await getProducts();
 
     const foundProduct = await products?.find(

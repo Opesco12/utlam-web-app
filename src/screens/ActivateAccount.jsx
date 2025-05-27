@@ -14,6 +14,7 @@ import { useAuth } from "../context/AuthProvider";
 
 const ActivateAccount = () => {
   const [isUserVerified, setIsUserVerified] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [verificationUrl, setVerificationUrl] = useState(null);
   const [jobId, setJobId] = useState(null);
   const [userId, setUserId] = useState(null);
@@ -27,127 +28,73 @@ const ActivateAccount = () => {
   const [code, setCode] = useState(Array(6).fill(""));
   const [loading, setLoading] = useState(false);
 
-  // Handle redirect from Smile Identity (runs in new tab)
-  useEffect(() => {
-    const status = searchParams.get("status");
-    const userId = searchParams.get("user_id");
-
-    if (status && userId && window.opener) {
-      // Send message to the original tab
-      window.opener.postMessage(
-        { status, user_id: userId },
-        "http://localhost:5173"
-      );
-      console.log("Sent message to original tab:", { status, user_id: userId });
-      // Close the new tab
-      window.close();
-    } else if (status && userId && !window.opener) {
-      console.warn("No opener window found. Handling redirect in current tab.");
-      checkUserStatus(userId);
-    }
-  }, [searchParams]);
-
-  // Listen for postMessage from new tab (runs in original tab)
-  useEffect(() => {
-    const handleMessage = (event) => {
-      // Verify message origin for security
-      if (
-        event.origin !== "https://189zln6v-5173.uks1.devtunnels.ms" ||
-        event.origin !== "http://localhost:5173"
-      ) {
-        console.warn("Received message from untrusted origin:", event.origin);
-        return;
-      }
-      const { status, user_id } = event.data;
-      if (status && user_id) {
-        console.log("Received redirect data:", { status, user_id });
-        // Update query parameters and check status
-        navigate(`/account/activate?status=${status}&user_id=${user_id}`, {
-          replace: true,
-          state: stateData, // Preserve stateData
-        });
-        checkUserStatus(user_id);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [navigate, stateData]);
-
-  // Redirect to login if no email in stateData
   // useEffect(() => {
   //   if (!stateData?.email) {
   //     navigate("/login");
   //   }
   // }, [stateData, navigate]);
 
-  // Fetch Smile Identity verification link
   const fetchSmileLink = async () => {
-    // if (!stateData?.email) {
-    //   toast.error("An error occured");
-    //   navigate("/login");
-    //   return;
-    // }
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:3000/initiate-smilelink",
+        "https://smile-id.vercel.app/initiate-smilelink",
         {
-          // email: stateData.email, // Send email to backend for hashing
+          // email: stateData.email,
           user_id: "oyelekemmanuel@gmail.com",
         }
       );
       const { url, job_id, user_id } = response.data;
+      console.log("SmileLink response: ", response.data);
       setVerificationUrl(url);
       setJobId(job_id);
       setUserId(user_id);
       if (url) {
         const newTab = window.open(url, "_blank");
+
         if (!newTab) {
           toast.error("Please allow popups for this site.");
         }
+        setVerifying(true);
       }
-      console.log("SmileLink response:", response.data);
     } catch (error) {
-      console.error("Error initiating SmileLink:", error.message);
       toast.error("Failed to start verification. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Check verification status
-  const checkUserStatus = async (userIdToCheck) => {
-    if (!userIdToCheck) return;
+  const checkUserStatus = async (jobId, userId) => {
+    if (!jobId) return;
     setLoading(true);
     try {
       console.log("Trying to check verification status");
-      // const response = await axios.get(`http://localhost:3000/user-status/${userIdToCheck}`);
-      // if (response.status !== 200) {
-      //   throw new Error("Failed to fetch user status");
-      // }
-      // const { is_approved, jobs } = response.data;
-      // if (is_approved) {
-      //   toast.success("Verification approved! Enter the OTP to activate your account.");
-      //   setIsUserVerified(true);
-      // } else if (jobs.some((job) => job.status === "pending")) {
-      //   toast.info("Verification pending. Please wait.");
-      // } else {
-      //   const failedReasons = jobs
-      //     .filter((job) => job.result_code && job.result_code !== "1012")
-      //     .map((job) => job.result_text)
-      //     .join("; ");
-      //   toast.error(`Verification failed: ${failedReasons || "Unknown reason"}. Please try again.`);
-      // }
+      const response = await axios.post(`https://smile-id.vercel.app/status`, {
+        userId: userId,
+        jobId: jobId,
+      });
+
+      console.log("Job status response: ", response.data);
+      if (response.data.job_success === true) {
+        setIsUserVerified(true);
+        setVerifying(false);
+        toast.success(
+          `Identity verification successful. ${response.data.result.ResultText}`
+        );
+      } else {
+        setIsUserVerified(false);
+        setVerifying(false);
+        toast.error(
+          `Identity verification failed. ${response.data.result.ResultText}`
+        );
+      }
     } catch (error) {
-      console.error("Error fetching user status:", error.message);
       toast.error("Error checking verification status. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle OTP submission
   const handleSubmit = async () => {
     if (!isUserVerified) {
       toast.error("Please complete identity verification first.");
@@ -163,7 +110,7 @@ const ActivateAccount = () => {
       if (data) {
         toast.success("Your account has been successfully activated");
         setIsAuthenticated(true);
-        navigate("/dashboard"); // Redirect to dashboard after activation
+        navigate("/dashboard");
       }
     } catch (error) {
       console.error("Error activating account:", error.message);
@@ -175,7 +122,6 @@ const ActivateAccount = () => {
     }
   };
 
-  // Resend activation code
   const resendActivationCodeHandler = async () => {
     if (!stateData?.email) {
       toast.error("Email not provided. Please log in again.");
@@ -228,7 +174,7 @@ const ActivateAccount = () => {
                   : "Kindly verify your identity to continue."}
               </StyledText>
             </div>
-            {!isUserVerified && (
+            {!isUserVerified && verifying === false ? (
               <button
                 onClick={fetchSmileLink}
                 disabled={loading}
@@ -236,6 +182,20 @@ const ActivateAccount = () => {
               >
                 {loading ? <SmallLoadingSpinner /> : "Verify Identity"}
               </button>
+            ) : (
+              !isUserVerified && (
+                <button
+                  onClick={() => checkUserStatus(jobId, userId)}
+                  disabled={loading}
+                  className="bg-primary text-white w-full py-3 px-4 mt-5 rounded-lg hover:bg-light-primary focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors"
+                >
+                  {loading ? (
+                    <SmallLoadingSpinner />
+                  ) : (
+                    "Confirm Identity Verification"
+                  )}
+                </button>
+              )
             )}
             {isUserVerified && (
               <>

@@ -225,6 +225,18 @@ const ProductDetails = () => {
     value: tenor.tenor,
   }));
 
+  const handleInvestment = async (amount, portfolioId) => {
+    setState((prev) => ({ ...prev, processingInvestment: true }));
+
+    await handleMutualFundInvestment(amount, portfolioId);
+
+    setState((prev) => ({
+      ...prev,
+      processingInvestment: false,
+      isModalOpen: false,
+    }));
+  };
+
   if (state.loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -305,7 +317,6 @@ const ProductDetails = () => {
                 }
               />
             </div>
-            {/* <p className="text-[#808080]">{state?.product?.productMandate}</p> */}
           </div>
           <div className="flex flex-col gap-5 w-[100%] mt-[50px] md:w-[40%] md:mt-[0px]">
             <InvestmentForm
@@ -318,15 +329,74 @@ const ProductDetails = () => {
                   ...prev,
                   investmentAmount: amount,
                   selectedTenor: tenor,
+                  isModalOpen: state.isLiabilityProduct ? false : true,
+                  processingInvestment: true,
                 }));
-                navigate("/invest/investment_simulator", {
-                  state: { principal: amount, portfolioId: portfolioId },
-                });
+                if (state?.isLiabilityProduct === true) {
+                  navigate("/invest/investment_simulator", {
+                    state: { principal: amount, portfolioId: portfolioId },
+                  });
+                }
               }}
             />
           </div>
         </div>
       </ContentBox>
+
+      <AppModal
+        title="Confirm Investment"
+        isOpen={state.isModalOpen}
+        onClose={() =>
+          !state.processingInvestment &&
+          setState((prev) => ({
+            ...prev,
+            isModalOpen: false,
+            isChecked: false,
+          }))
+        }
+      >
+        <p className="mt-4">
+          Redemptions during the Lock-up period will attract a 20% penalty on
+          accrued returns earned over the period.
+        </p>
+
+        <p>
+          {" "}
+          By tapping the "Make Payment" button, you agree to have the total due
+          deducted from your wallet balance to create this investment plan
+        </p>
+
+        <div style={{ marginTop: "20px", marginBottom: "20px" }}>
+          <Switch
+            checked={state.isChecked}
+            onChange={() =>
+              setState((prev) => ({
+                ...prev,
+                isChecked: !prev.isChecked,
+              }))
+            }
+          />
+          <p>Yes, I agree to the terms above</p>
+        </div>
+        <button
+          onClick={() =>
+            handleInvestment(
+              Number(state.investmentAmount),
+              Number(state.product?.portfolioId)
+            )
+          }
+          className="w-full mt-5 border border-gray-300 rounded-md px-3 py-2 hover:bg-light-primary focus:outline-none focus:ring-2 focus:ring-primary text-white bg-primary"
+          disabled={!state.isChecked || state.processingInvestment}
+        >
+          <div className="font-semibold">
+            {state.processingInvestment ? (
+              <SmallLoadingSpinner color={Colors.white} />
+            ) : (
+              "Make Payment"
+            )}
+          </div>
+        </button>
+      </AppModal>
     </div>
   );
 };

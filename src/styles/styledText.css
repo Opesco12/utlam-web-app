@@ -90,21 +90,21 @@
 }
 
 .regular {
-  font-family: "IBMRegular", sans-serif;
+  /* font-family: "IBMRegular", sans-serif; */
   font-weight: 400;
 }
 
 .medium {
-  font-family: "IBMMedium", sans-serif;
+  /* font-family: "IBMMedium", sans-serif; */
   font-weight: 500;
 }
 
 .semibold {
-  font-family: "IBMSemibold", sans-serif;
+  /* font-family: "IBMSemibold", sans-serif; */
   font-weight: 600;
 }
 
 .bold {
-  font-family: "IBMBold", sans-serif;
+  /* font-family: "IBMBold", sans-serif; */
   font-weight: 700;
 }

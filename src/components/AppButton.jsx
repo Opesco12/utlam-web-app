@@ -16,6 +16,7 @@ const AppButton = ({
         <button
           className={`w-full flex items-center justify-center px-6 py-3  bg-primary rounded-lg ${classname}`}
           disabled={disabled}
+          type={type}
         >
           <StyledText
             type="title"

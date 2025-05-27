@@ -480,7 +480,6 @@ const PersonalDetails = () => {
         </div>
 
         <div className="py-6">
-          {/* Personal Details Tab Content */}
           {activeTab === "personal" && (
             <PersonalInfoForm
               userData={userData}
@@ -490,7 +489,6 @@ const PersonalDetails = () => {
             />
           )}
 
-          {/* Next of Kin Tab Content */}
           {activeTab === "nextOfKin" && (
             <NextOfKinForm
               nextOfKin={nextOfKin}

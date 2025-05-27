@@ -108,7 +108,10 @@ const Login = () => {
                       Forgot Password?
                     </span>
                   </StyledText>
-                  <AppButton onClick={handleSubmit}>
+                  <AppButton
+                    onClick={handleSubmit}
+                    type={"submit"}
+                  >
                     {isSubmitting ? (
                       <SmallLoadingSpinner color={Colors.white} />
                     ) : (

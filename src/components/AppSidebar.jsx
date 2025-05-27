@@ -127,15 +127,18 @@ const ResponsiveSidebar = () => {
     },
   ];
 
-  // Function to check if menu item is active
   const isActive = (path) => {
-    // For exact matches like home page
     if (path === "/" && currentPath === "/") {
       return true;
     }
-    // For nested routes, check if current path starts with menu item path
-    // This ensures /profile/personal-details would highlight the Profile menu item
     return path !== "/" && currentPath.startsWith(path);
+  };
+
+  const handleMenuItemClick = (path) => {
+    navigate(path);
+    if (isSmallScreen) {
+      handleToggleSidebar();
+    }
   };
 
   return (
@@ -189,7 +192,7 @@ const ResponsiveSidebar = () => {
             <MenuItem
               key={index}
               icon={item.icon}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleMenuItemClick(item.path)}
               className={isActive(item.path) ? "active-menu-item" : ""}
               style={
                 isActive(item.path)

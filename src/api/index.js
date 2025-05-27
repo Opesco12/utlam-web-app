@@ -1,5 +1,5 @@
-import { toast } from "sonner";
 import axios from "axios";
+import { toast } from "sonner";
 
 import { endpoints } from "./endpoints";
 import { userStorage } from "../storage/userStorage";
@@ -22,14 +22,13 @@ const getAuthToken = async () => {
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 60000,
+  timeout: 90000,
 });
 
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      console.log("Unauthorized request detected");
       userStorage.removeItem(keys.user);
       if (history && history.navigate) {
         history.navigate("/login", { replace: true });
@@ -70,7 +69,6 @@ const apiCall = async ({
     if (requiresAuth) {
       const token = await getAuthToken();
       if (!token) {
-        console.log("No auth token found");
         if (history && history.navigate) {
           history.navigate("/login", { replace: true });
         } else {
@@ -84,8 +82,6 @@ const apiCall = async ({
     const response = await axiosInstance(config);
     return response.data;
   } catch (error) {
-    console.error("API call error:", error);
-
     throw error;
   }
 };
@@ -100,7 +96,6 @@ export const getCountries = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch countries");
     }
     return null;
@@ -118,7 +113,6 @@ export const registerNewIndividual = async (info) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       if (error.response && error.response.status === 400) {
         toast.error("Invalid Details or account already exists");
       } else {
@@ -131,7 +125,6 @@ export const registerNewIndividual = async (info) => {
 
 export const registerExistingIndividual = async (info) => {
   try {
-    console.log(info);
     const data = await apiCall({
       method: "POST",
       endpoint: endpoints.RegisterExistingIndividual,
@@ -141,7 +134,6 @@ export const registerExistingIndividual = async (info) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       if (error.response && error.response.status === 400) {
         toast.error("Invalid Details or account already exists");
       } else {
@@ -161,7 +153,6 @@ export const getClientInfo = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch client information");
     }
     return null;
@@ -177,7 +168,6 @@ export const updateClientInfo = async (info) => {
     });
     return data;
   } catch (error) {
-    console.error(error);
     toast.error("An error occured");
   }
 };
@@ -191,7 +181,6 @@ export const getNextOfKins = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch next of kins");
     }
     return null;
@@ -208,7 +197,6 @@ export const createNextOfKin = async (info) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Failed to create next of kin");
     }
     return null;
@@ -223,10 +211,12 @@ export const login = async (username, password) => {
       data: { username: username, password: password },
       requiresAuth: false,
     });
+    if (data) {
+      localStorage.setItem("loginTime", Date.now().toString());
+    }
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       if (error.response && error.response.status === 400) {
         toast.error("Invalid username or password");
       } else {
@@ -248,10 +238,10 @@ export const login2fa = async (info) => {
         securityCode: info.code,
       },
     });
+
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       if (error.response && error.response.status === 400) {
         toast.error("Incorrect Security Code");
       } else {
@@ -273,7 +263,6 @@ export const activateAccount = async (info) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       if (error.response && error.response.status === 400) {
         toast.error(
           "Invalid security passcode or security login passcode has expired"
@@ -297,7 +286,6 @@ export const resnedActivationCode = async (info) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       if (error.response && error.response.status === 400) {
         toast.error("Invalid details or account already exists");
       } else {
@@ -315,10 +303,11 @@ export const logout = async (token) => {
       endpoint: endpoints.Logout,
       data: { token: token },
     });
+    userStorage.removeItem(keys.user);
+    localStorage.removeItem("loginTime");
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Logout failed");
     }
     return null;
@@ -335,7 +324,6 @@ export const changePassword = async (oldPassword, newPassword) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       if (error.response && error.response.status === 400) {
         toast.error("Incorrect Password");
       } else {
@@ -357,7 +345,6 @@ export const resetPasswordRequest = async (email) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       if (error.response && error.response.status === 400) {
         toast.error("Please input a registered email address");
       } else {
@@ -379,7 +366,6 @@ export const resetPassword = async (token, password) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       if (error.response && error.response.status === 400) {
         toast.error(
           "An error occurred, Please confirm that the token is correct"
@@ -402,7 +388,6 @@ export const getWalletBalance = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch wallet balances");
     }
     return null;
@@ -419,7 +404,6 @@ export const getProducts = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch data");
     }
     return null;
@@ -435,7 +419,6 @@ export const getVirtualAccounts = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch virtual accounts");
     }
     return null;
@@ -451,7 +434,6 @@ export const getClientPortfolio = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch client portfolio");
     }
     return null;
@@ -467,7 +449,6 @@ export const getMutualFundOnlineBalances = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch mutual fund balances");
     }
     return null;
@@ -483,7 +464,6 @@ export const getMutualFundOnlineBalance = async (portfolioId) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch mutual fund balance");
     }
     return null;
@@ -500,7 +480,6 @@ export const getMutualFundStatement = async (portfolioId) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch statements");
     }
     return null;
@@ -516,7 +495,6 @@ export const getTransactions = async (startdate, enddate) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch transactions");
     }
     return null;
@@ -532,7 +510,6 @@ export const getRecentTransactions = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("An error occurred");
     }
     return null;
@@ -544,7 +521,6 @@ export const mutualFundSubscription = async ({
   portfolioId,
   amount,
 }) => {
-  console.log("payload: ", accountNumber, portfolioId, amount);
   if (accountNumber) {
     try {
       const data = await apiCall({
@@ -559,7 +535,6 @@ export const mutualFundSubscription = async ({
       return data;
     } catch (error) {
       if (!(error instanceof AuthenticationError)) {
-        console.log(error);
         toast.error("An error occurred");
       }
       return null;
@@ -574,11 +549,9 @@ export const mutualFundSubscription = async ({
           amount: amount,
         },
       });
-      console.log("The request gave back: ", data);
       return data;
     } catch (error) {
       if (!(error instanceof AuthenticationError)) {
-        console.log(error);
         toast.error("An error occurred");
       }
       return null;
@@ -588,8 +561,6 @@ export const mutualFundSubscription = async ({
 
 export const mutualfundRedemption = async (accountNo, amount) => {
   try {
-    console.log("account number is:", accountNo);
-    console.log("amount is : ", amount);
     const data = await apiCall({
       endpoint: endpoints.mutualfundRedemption,
       method: "POST",
@@ -601,7 +572,6 @@ export const mutualfundRedemption = async (accountNo, amount) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("An error occurred while processing fund withdrawal");
     }
     return null;
@@ -617,7 +587,6 @@ export const getFixedIcomeOnlineBalances = async (portfolioId) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch fixed income balances");
     }
     return null;
@@ -646,7 +615,6 @@ export const getLiabilityProducts = async (portfolioId) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch liability products");
     }
     return null;
@@ -662,7 +630,6 @@ export const getTenor = async (productId) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("Unable to fetch tenor information");
     }
     return null;
@@ -692,7 +659,6 @@ export const fixedIncomeSubscriptionOrder = async ({
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("An error occurred");
     }
     return null;
@@ -712,7 +678,6 @@ export const fixedIncomeRedemptionOrder = async (referenceNo, amount) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.log(error);
       toast.error("An error occurred while processing fund withdrawal");
     }
     return null;
@@ -728,7 +693,6 @@ export const getBanks = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       toast.error("An error occurred");
     }
     return null;
@@ -745,9 +709,7 @@ export const createClientBank = async (requestData) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       toast.error(error?.response?.data?.Message);
-      // toast.error("Invalid details or error while processing request");
     }
     return null;
   }
@@ -762,7 +724,6 @@ export const getClientBankAccounts = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       toast.error("Unable to fetch client bank accounts");
     }
     return null;
@@ -779,7 +740,6 @@ export const debitWallet = async (requestData) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       if (error.response.data?.Message === "Incorrect pin") {
         toast.error("Incorrect pin");
       } else {
@@ -799,7 +759,6 @@ export const getPendingWithdrawals = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       toast.error("An error occurred while fetching pending withdrawals");
     }
     return null;
@@ -814,7 +773,6 @@ export const fetchClientPhoto = async () => {
     });
     return data;
   } catch (error) {
-    console.error(error);
     toast.error("An error occured while fetching photo");
   }
 };
@@ -853,7 +811,6 @@ export const uploadImage = async (file) => {
 
     return response;
   } catch (error) {
-    console.error("Upload error:", error);
     toast.error("Upload failed");
   }
 };
@@ -866,7 +823,6 @@ export const getPendingDocuments = async () => {
     });
     return data;
   } catch (error) {
-    console.error(error);
     toast.error("An error occured while fetching photo");
   }
 };
@@ -898,7 +854,6 @@ export const uploadClientDocument = async (file, documentId, comment) => {
     toast.success("Document uploaded successfully");
     return response.data;
   } catch (error) {
-    console.error("Upload failed: ", error);
     toast.error("Document upload failed");
     throw error;
   }
@@ -913,7 +868,6 @@ export const hasTransactionPin = async () => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       toast.error("An error occurred");
     }
     return null;
@@ -930,7 +884,6 @@ export const createTransactionPin = async (requestData) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       toast.error("An error occurred");
     }
     return null;
@@ -947,7 +900,6 @@ export const changeTransactionPin = async (requestData) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       toast.error("An error occurred");
     }
     return null;
@@ -964,7 +916,6 @@ export const resetTransactionPinRequest = async (username) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       toast.error("An error occurred");
     }
     return null;
@@ -981,7 +932,6 @@ export const resetTransactionPin = async (requestData) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       toast.error("An error occurred");
     }
     return null;
@@ -998,7 +948,6 @@ export const sendMessageToClientManager = async (message) => {
     return data;
   } catch (error) {
     if (!(error instanceof AuthenticationError)) {
-      console.error(error);
       toast.error("An error occurred");
     }
     return null;

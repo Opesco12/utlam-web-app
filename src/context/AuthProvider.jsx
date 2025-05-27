@@ -7,6 +7,7 @@ import { BASE_URL } from "../api";
 import { ToastContainer } from "react-toastify";
 
 import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
+import { toast } from "sonner";
 
 export const AuthContext = createContext(null);
 
@@ -35,19 +36,66 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  // useEffect(() => {
+  //   const initializeAuth = async () => {
+  //     try {
+  //       const token = await getAuthToken();
+
+  //       if (!token) {
+  //         setIsAuthenticated(false);
+  //         return;
+  //       }
+
+  //       const isValid = await validateToken(token);
+  //       if (isValid) {
+  //         const userData = userStorage.getItem(keys.user);
+  //         setUser(userData);
+  //         setIsAuthenticated(true);
+  //       } else {
+  //         userStorage.removeItem(keys.user);
+  //         setIsAuthenticated(false);
+  //       }
+  //     } catch (error) {
+  //       console.error("Auth initialization failed:", error);
+  //       setIsAuthenticated(false);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   initializeAuth();
+  // }, []);
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         const token = await getAuthToken();
 
         if (!token) {
-          // console.log("NO token found for auth provider logic");
           setIsAuthenticated(false);
           return;
         }
 
         const isValid = await validateToken(token);
         if (isValid) {
+          const loginTimeRaw = localStorage.getItem("loginTime");
+          if (!loginTimeRaw) {
+            userStorage.removeItem(keys.user);
+            setIsAuthenticated(false);
+            setUser(null);
+            return;
+          }
+          const loginTime = parseInt(loginTimeRaw, 10);
+          const now = Date.now();
+          const sessionDuration = 59 * 60 * 1000;
+          if (now - loginTime > sessionDuration) {
+            toast.error("Session expired. Please log in again");
+            userStorage.removeItem(keys.user);
+            setIsAuthenticated(false);
+            setUser(null);
+            localStorage.removeItem("loginTime");
+            return;
+          }
           const userData = userStorage.getItem(keys.user);
           setUser(userData);
           setIsAuthenticated(true);
@@ -66,6 +114,43 @@ const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    const loginTimeRaw = localStorage.getItem("loginTime");
+    if (!loginTimeRaw) {
+      userStorage.removeItem(keys.user);
+      setIsAuthenticated(false);
+      setUser(null);
+      return;
+    }
+
+    const loginTime = parseInt(loginTimeRaw, 10);
+    const now = Date.now();
+    const sessionDuration = 59 * 60 * 1000;
+    const timeLeft = sessionDuration - (now - loginTime);
+
+    if (timeLeft <= 0) {
+      toast.error("Session expired. Please log in again");
+      userStorage.removeItem(keys.user);
+      setIsAuthenticated(false);
+      setUser(null);
+      localStorage.removeItem("loginTime");
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      userStorage.removeItem(keys.user);
+      setIsAuthenticated(false);
+      setUser(null);
+      localStorage.removeItem("loginTime");
+    }, timeLeft);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated]);
+
   const value = {
     isAuthenticated,
     loading,
@@ -73,7 +158,6 @@ const AuthProvider = ({ children }) => {
     setIsAuthenticated,
   };
 
-  // Don't render anything until the initial auth check is complete
   if (loading) {
     return (
       <div className="h-[100vh] flex items-center justify-center ">
@@ -97,7 +181,6 @@ export const ProtectedRoute = ({ children, redirectTo = "/login" }) => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
-  // No need for loading check here since AuthProvider handles it
   if (!isAuthenticated) {
     return (
       <Navigate

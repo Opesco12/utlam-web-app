@@ -7,12 +7,12 @@ const AppRippleButton = ({ children, backgroundColor, width }) => {
     <AppRipple width={width}>
       <div
         style={{
-          height: "50px",
+          height: "45px",
           backgroundColor: backgroundColor,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          borderRadius: "12px",
+          borderRadius: "10px",
           gap: 10,
         }}
       >

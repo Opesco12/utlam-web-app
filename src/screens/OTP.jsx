@@ -24,40 +24,18 @@ const Otp = () => {
   const [code, setCode] = useState(Array(6).fill(""));
   const [loading, setLoading] = useState(false);
 
-  // useEffect(() => {
-  //   const fetchSmileLink = async () => {
-  //     // getting the verification link
-  //     // const response = await axios.post(
-  //     //   "http://localhost:3000/initiate-smilelink",
-  //     //   {
-  //     //     user_id: "oyelekemmanuel@gmail.com" + "_" + Date.now(),
-  //     //   }
-  //     // );
-
-  //     // checking if the verification was succesful
-  //     const response = await axios.get(
-  //       "http://localhost:3000/status/d9ec8eaa-f94a-4fc6-92ff-9d04c16381f2"
-  //     );
-
-  //     console.log("response from smilelink", response);
-  //   };
-
-  //   fetchSmileLink();
-  // }, []);
-
   const handleSubmit = async () => {
     setLoading(true);
     if (stateData?.header) {
-      const info = {
-        username: stateData?.email,
-        securityCode: code.join(""),
-      };
-
-      const data = await activateAccount(info);
-      if (data) {
-        toast.success("Your account has been successfully activated");
-        navigate("/login");
-      }
+      // const info = {
+      //   username: stateData?.email,
+      //   securityCode: code.join(""),
+      // };
+      // const data = await activateAccount(info);
+      // if (data) {
+      //   toast.success("Your account has been successfully activated");
+      //   navigate("/login");
+      // }
     } else {
       const data = await login2fa({
         email: stateData?.email,
@@ -145,7 +123,7 @@ const Otp = () => {
               </AppButton>
             )}
 
-            {stateData?.header && (
+            {/* {stateData?.header && (
               <div className="my-[10px] text-center">
                 <StyledText color={Colors.light}>
                   Didn't get a code?{"  "}
@@ -157,7 +135,7 @@ const Otp = () => {
                   </span>
                 </StyledText>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>
