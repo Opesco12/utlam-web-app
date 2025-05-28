@@ -271,67 +271,112 @@ const ProductDetails = () => {
       <ContentBox className="mt-[20px] md:mt-[35px]">
         <div className="flex justify-between flex-col md:flex-row">
           <div className="flex flex-col gap-5 w-[100%] md:w-[55%]">
-            <div className="flex">
-              <DetailsItem
-                icon={
-                  <PercentageCircle
-                    color={Colors.lightPrimary}
-                    variant="Bold"
-                    size={25}
+            {!state.isLiabilityProduct ? (
+              <>
+                <div className="flex">
+                  <DetailsItem
+                    icon={
+                      <PercentageCircle
+                        color={Colors.lightPrimary}
+                        variant="Bold"
+                        size={25}
+                      />
+                    }
+                    text="Annualized Yield"
+                    detail={`${state.product.return}%`}
+                    tooltipContent={
+                      "The annual rate of return on an investment, expressed as a percentage"
+                    }
                   />
-                }
-                text="Annualized Yield"
-                detail={`${state.product.return}%`}
-                tooltipContent={
-                  "The annual rate of return on an investment, expressed as a percentage"
-                }
-              />
-              <DetailsItem
-                icon={
-                  <Moneys
-                    color={Colors.lightPrimary}
-                    variant="Bold"
-                    size={25}
+                  <DetailsItem
+                    icon={
+                      <Moneys
+                        color={Colors.lightPrimary}
+                        variant="Bold"
+                        size={25}
+                      />
+                    }
+                    text="Minimum Investment"
+                    detail={amountFormatter.format(
+                      state.product.minimumInvestment
+                    )}
+                    tooltipContent={
+                      "The smallest amount of money required to start investing"
+                    }
                   />
-                }
-                text="Minimum Investment"
-                detail={amountFormatter.format(state.product.minimumInvestment)}
-                tooltipContent={
-                  "The smallest amount of money required to start investing"
-                }
-              />
-            </div>
-            <hr className="border-gray-300" />
-            <div className="gap-5 flex">
-              <DetailsItem
-                icon={
-                  <Calendar
-                    color={Colors.lightPrimary}
-                    variant="Bold"
-                    size={25}
+                </div>
+                <hr className="border-gray-300" />
+                <div className="gap-5 flex">
+                  <DetailsItem
+                    icon={
+                      <Calendar
+                        color={Colors.lightPrimary}
+                        variant="Bold"
+                        size={25}
+                      />
+                    }
+                    text="Minimum Holding Period"
+                    detail={`${state.product.minimumHoldingPeriod} Days`}
+                    tooltipContent={
+                      "The shortest duration you must hold an investment before liquidation"
+                    }
                   />
-                }
-                text="Minimum Holding Period"
-                detail={`${state.product.minimumHoldingPeriod} Days`}
-                tooltipContent={
-                  "The shortest duration you must hold an investment before liquidation"
-                }
-              />
-              <DetailsItem
-                icon={
-                  <Judge
-                    color={Colors.lightPrimary}
-                    variant="Bold"
-                    size={25}
+                  <DetailsItem
+                    icon={
+                      <Judge
+                        color={Colors.lightPrimary}
+                        variant="Bold"
+                        size={25}
+                      />
+                    }
+                    text="Penalty Fee"
+                    detail={`${state.product.earlyRedemptionPenaltyRate}%`}
+                    tooltipContent={
+                      "A charge incurred for early withdrawal/pre-liquidation"
+                    }
                   />
-                }
-                text="Penalty Fee"
-                detail={`${state.product.earlyRedemptionPenaltyRate}%`}
-                tooltipContent={
-                  "A charge incurred for early withdrawal/pre-liquidation"
-                }
-              />
-            </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="gap-5 flex items-center justify-center">
+                  <DetailsItem
+                    icon={
+                      <Moneys
+                        color={Colors.lightPrimary}
+                        variant="Bold"
+                        size={25}
+                      />
+                    }
+                    text="Minimum Investment"
+                    detail={amountFormatter.format(
+                      state.product.minimumInvestment
+                    )}
+                    tooltipContent={
+                      "The smallest amount of money required to start investing"
+                    }
+                  />
+                </div>
+
+                <hr className="border-gray-300" />
+                <div className="gap-5 flex item-center justify-center">
+                  <DetailsItem
+                    icon={
+                      <Judge
+                        color={Colors.lightPrimary}
+                        variant="Bold"
+                        size={25}
+                      />
+                    }
+                    text="Penalty Fee"
+                    detail={`${state.product.earlyRedemptionPenaltyRate}%`}
+                    tooltipContent={
+                      "A charge incurred for early withdrawal/pre-liquidation"
+                    }
+                  />
+                </div>
+              </>
+            )}
           </div>
           <div className="flex flex-col gap-5 w-[100%] mt-[50px] md:w-[40%] md:mt-[0px]">
             <InvestmentForm

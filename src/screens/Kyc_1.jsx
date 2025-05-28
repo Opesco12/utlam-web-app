@@ -14,6 +14,7 @@ import {
 } from "../api";
 import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
 import AppButton from "../components/AppButton";
+import { Eye, EyeOff } from "lucide-react";
 
 const FileInput = ({ label, uploadButton, ...props }) => {
   const [field, meta, helpers] = useField(props);
@@ -54,6 +55,8 @@ const KYC_1 = () => {
   const [pendingDocuments, setPendingDocuments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("identification");
+  const [showNIN, setShowNIN] = useState(false);
+  const [showBVN, setShowBVN] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -182,7 +185,7 @@ const KYC_1 = () => {
           >
             {({ isSubmitting, errors }) => (
               <Form>
-                <div className="mb-4">
+                <div className="mb-4 relative">
                   <label
                     htmlFor="nin"
                     className="block text-sm font-medium text-gray-700 mb-1"
@@ -192,10 +195,18 @@ const KYC_1 = () => {
                   <Field
                     id="nin"
                     name="nin"
-                    type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    type={showNIN ? "text" : "password"}
+                    className="w-full p-2 border border-gray-300 rounded-md pr-10"
                     disabled={clientData?.nin}
                   />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-9 text-gray-500"
+                    tabIndex={-1}
+                    onClick={() => setShowNIN((prev) => !prev)}
+                  >
+                    {showNIN ? <EyeOff /> : <Eye />}
+                  </button>
                   {errors.nin && (
                     <div className="text-red-600 text-sm mt-1">
                       {errors.nin}
@@ -203,7 +214,7 @@ const KYC_1 = () => {
                   )}
                 </div>
 
-                <div className="mb-4">
+                <div className="mb-4 relative">
                   <label
                     htmlFor="bvn"
                     className="block text-sm font-medium text-gray-700 mb-1"
@@ -213,16 +224,25 @@ const KYC_1 = () => {
                   <Field
                     id="bvn"
                     name="bvn"
-                    type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    type={showBVN ? "text" : "password"}
+                    className="w-full p-2 border border-gray-300 rounded-md pr-10"
                     disabled={clientData?.bvn}
                   />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-9 text-gray-500"
+                    tabIndex={-1}
+                    onClick={() => setShowBVN((prev) => !prev)}
+                  >
+                    {showBVN ? <EyeOff /> : <Eye />}
+                  </button>
                   {errors.bvn && (
                     <div className="text-red-600 text-sm mt-1">
                       {errors.bvn}
                     </div>
                   )}
                 </div>
+
                 {(clientData?.nin === null || clientData?.bvn === null) && (
                   <button
                     type="submit"
