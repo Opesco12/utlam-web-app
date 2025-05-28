@@ -226,9 +226,22 @@ const ProductDetails = () => {
   }));
 
   const handleInvestment = async (amount, portfolioId) => {
+    console.log(amount, portfolioId);
     setState((prev) => ({ ...prev, processingInvestment: true }));
 
-    await handleMutualFundInvestment(amount, portfolioId);
+    const response = await mutualFundSubscription({
+      amount: amount,
+      portfolioId: portfolioId,
+    });
+
+    if (response) {
+      toast.success("Invesment Successful");
+      setState((prev) => ({
+        ...prev,
+        processingInvestment: false,
+        isModalOpen: false,
+      }));
+    }
 
     setState((prev) => ({
       ...prev,
@@ -330,7 +343,7 @@ const ProductDetails = () => {
                   investmentAmount: amount,
                   selectedTenor: tenor,
                   isModalOpen: state.isLiabilityProduct ? false : true,
-                  processingInvestment: true,
+                  // processingInvestment: true,
                 }));
                 if (state?.isLiabilityProduct === true) {
                   navigate("/invest/investment_simulator", {
@@ -355,13 +368,7 @@ const ProductDetails = () => {
           }))
         }
       >
-        <p className="mt-4">
-          Redemptions during the Lock-up period will attract a 20% penalty on
-          accrued returns earned over the period.
-        </p>
-
         <p>
-          {" "}
           By tapping the "Make Payment" button, you agree to have the total due
           deducted from your wallet balance to create this investment plan
         </p>
