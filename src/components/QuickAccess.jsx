@@ -81,7 +81,7 @@ const QuickAccessItems = ({ navigate }) => {
       ),
       title: "Help Desk",
       subtitle: "Get help from excellent customer care service",
-      navigateTo: "/help",
+      navigateTo: "/profile/help_and_support",
     },
   ];
 

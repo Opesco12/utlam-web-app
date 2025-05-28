@@ -45,6 +45,7 @@ import Pin from "./screens/Pin";
 import ContactRelationShipManager from "./screens/ContactRelationShipManager";
 import InvestmentSimulator from "./screens/InvestmentSimulator";
 import ActivateAccount from "./screens/ActivateAccount";
+import Support from "./screens/Support";
 
 function PageTitle() {
   const location = useLocation();
@@ -202,6 +203,10 @@ function App() {
               <Route
                 path="/profile/contact-manager"
                 element={<ContactRelationShipManager />}
+              />
+              <Route
+                path="/profile/help_and_support"
+                element={<Support />}
               />
               <Route
                 path="/profile/pin"

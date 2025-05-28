@@ -943,7 +943,7 @@ export const sendMessageToClientManager = async (message) => {
     const data = await apiCall({
       endpoint: endpoints.sendMessageToClientManager,
       method: "POST",
-      data: message,
+      data: { message: message },
     });
     return data;
   } catch (error) {
