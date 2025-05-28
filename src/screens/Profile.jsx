@@ -179,7 +179,7 @@ const Profile = () => {
         />
       ),
       title: "Help & Support",
-      // path: "/help-support",
+      path: "/profile/help_and_support",
     },
   ];
 
