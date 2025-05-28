@@ -240,7 +240,9 @@ const ProductDetails = () => {
         ...prev,
         processingInvestment: false,
         isModalOpen: false,
+        investmentAmount: 0,
       }));
+      navigate("/");
     }
 
     setState((prev) => ({
