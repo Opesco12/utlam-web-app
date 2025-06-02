@@ -263,7 +263,7 @@ function App() {
                   <Helmet>
                     <title>UTLAM | Activate Account</title>
                   </Helmet>
-                  <ActivateAccount />
+                  <Otp />
                 </PublicRoute>
               }
             />

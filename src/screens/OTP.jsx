@@ -1,19 +1,18 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
+import { Toaster, toast } from "sonner";
 
 import AppButton from "../components/AppButton";
 import OtpInput from "../components/Otp_Input";
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
 import { obfuscateEmail } from "../helperFunctions/obfuscateEmail";
-import { useEffect, useState } from "react";
 import { activateAccount, login2fa, resnedActivationCode } from "../api";
 import { userStorage } from "../storage/userStorage";
 import { keys } from "../storage/kyes";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 
 import { useAuth } from "../context/AuthProvider";
-import { Toaster, toast } from "sonner";
-import axios from "axios";
 
 const Otp = () => {
   const { setIsAuthenticated } = useAuth();
@@ -27,15 +26,15 @@ const Otp = () => {
   const handleSubmit = async () => {
     setLoading(true);
     if (stateData?.header) {
-      // const info = {
-      //   username: stateData?.email,
-      //   securityCode: code.join(""),
-      // };
-      // const data = await activateAccount(info);
-      // if (data) {
-      //   toast.success("Your account has been successfully activated");
-      //   navigate("/login");
-      // }
+      const info = {
+        username: stateData?.email,
+        securityCode: code.join(""),
+      };
+      const data = await activateAccount(info);
+      if (data) {
+        toast.success("Your account has been successfully activated");
+        navigate("/login");
+      }
     } else {
       const data = await login2fa({
         email: stateData?.email,
@@ -123,7 +122,7 @@ const Otp = () => {
               </AppButton>
             )}
 
-            {/* {stateData?.header && (
+            {stateData?.header && (
               <div className="my-[10px] text-center">
                 <StyledText color={Colors.light}>
                   Didn't get a code?{"  "}
@@ -135,7 +134,7 @@ const Otp = () => {
                   </span>
                 </StyledText>
               </div>
-            )} */}
+            )}
           </div>
         </div>
       </div>
