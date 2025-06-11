@@ -48,7 +48,7 @@ const InvestmentSimulator = () => {
         setInvestibleProducts(data);
         setProductOptions(
           data
-            // .filter((item) => item.portfolioType === 9)
+            ?.filter((item) => item.portfolioType === 9)
             .map((item) => ({
               label: item.portfolioName,
               value: item.portfolioId,
@@ -312,12 +312,6 @@ const InvestmentSimulator = () => {
                     {errors.portfolioId && touched.portfolioId && (
                       <div style={{ color: "red" }}>{errors.portfolioId}</div>
                     )}
-                    {/* {values?.portfolioId &&
-                      isLiabilityProduct(values?.portfolioId) === false && (
-                        <p className="text-light-primary text-sm">
-                          Returns {getMutualFundInterest(values?.portfolioId)}%
-                        </p>
-                      )} */}
                   </div>
 
                   {values?.portfolioId !== "" &&

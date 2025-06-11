@@ -406,7 +406,6 @@ const Register = () => {
                         </label>
                       </div>
 
-                      {/* Show validation error if exists */}
                       {errors.agreedToTerms && touched.agreedToTerms && (
                         <StyledText
                           color="red"

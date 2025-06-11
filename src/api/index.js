@@ -893,7 +893,7 @@ export const createTransactionPin = async (requestData) => {
 export const changeTransactionPin = async (requestData) => {
   try {
     const data = await apiCall({
-      endpoint: endpoints.createPin,
+      endpoint: endpoints.changePin,
       method: "POST",
       data: requestData,
     });

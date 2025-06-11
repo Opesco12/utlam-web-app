@@ -1,20 +1,20 @@
 import { Formik, Form } from "formik";
-import * as Yup from "yup";
 import { Toaster, toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
 import AppButton from "../components/AppButton";
 import AppTextField from "../components/AppTextField";
-
-import { userLoginSchema } from "../validationSchemas/userSchema";
-import { login } from "../api";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
-import { obfuscateEmail } from "../helperFunctions/obfuscateEmail";
+import { userLoginSchema } from "../validationSchemas/userSchema";
+
+import { login } from "../api";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
 
   const handleKeyDown = (event, handleSubmit) => {
     if (event.key === "Enter") {
@@ -30,9 +30,9 @@ const Login = () => {
           <img
             src="/images/auth-image.svg"
             className="h-full w-full object-cover"
+            alt="Auth background"
           />
         </div>
-
         <div className="flex h-screen items-center justify-center">
           <div className="flex flex-col gap-5 w-[90%] mx-auto lg:w-[60%]">
             <img
@@ -64,24 +64,32 @@ const Login = () => {
                 setSubmitting(true);
                 const { email, password } = values;
 
-                const userData = await login(email, password);
-
-                if (userData) {
-                  if (
-                    userData.message ===
-                    `Account is inactive. Please activate account from ${obfuscateEmail(
-                      email
-                    )}`
-                  ) {
-                    toast.error("Account is inactive. Please activate account");
-                    navigate("/account/activate", {
-                      state: { email: email, header: "Activate Account" },
-                    });
-                  } else {
-                    navigate("/account/2fa", { state: { email: email } });
+                try {
+                  const userData = await login(email, password);
+                  if (userData) {
+                    if (userData?.message?.includes("Account is inactive")) {
+                      toast.error(
+                        "Account is inactive. Please activate account"
+                      );
+                      navigate(
+                        `/account/activate?email=${encodeURIComponent(
+                          email
+                        )}&header=Activate Account&from=${encodeURIComponent(
+                          from
+                        )}`
+                      );
+                    }
+                    navigate(
+                      `/account/2fa?email=${encodeURIComponent(
+                        email
+                      )}&from=${encodeURIComponent(from)}`
+                    );
                   }
+                } catch (error) {
+                  toast.error("Login failed. Please check your credentials");
+                } finally {
+                  setSubmitting(false);
                 }
-                setSubmitting(false);
               }}
             >
               {({ handleChange, handleSubmit, isSubmitting }) => (
@@ -102,15 +110,19 @@ const Login = () => {
                   />
                   <StyledText
                     style={{ textAlign: "right" }}
-                    className={"text-light hover:text-primary"}
+                    className="text-light hover:text-primary"
                   >
-                    <span onClick={() => navigate("/forgot_password")}>
+                    <span
+                      className="cursor-pointer"
+                      onClick={() => navigate("/forgot_password")}
+                    >
                       Forgot Password?
                     </span>
                   </StyledText>
                   <AppButton
                     onClick={handleSubmit}
-                    type={"submit"}
+                    type="submit"
+                    disabled={isSubmitting}
                   >
                     {isSubmitting ? (
                       <SmallLoadingSpinner color={Colors.white} />

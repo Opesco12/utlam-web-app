@@ -1,5 +1,4 @@
 import { Formik } from "formik";
-import * as Yup from "yup";
 import { Toaster, toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -8,7 +7,6 @@ import { Colors } from "../constants/Colors";
 import AppButton from "../components/AppButton";
 import AppTextField from "../components/AppTextField";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
-import { obfuscateEmail } from "../helperFunctions/obfuscateEmail";
 
 import { registerExistingIndividual } from "../api";
 import { existingUserRegistrationSchema } from "../validationSchemas/userSchema";

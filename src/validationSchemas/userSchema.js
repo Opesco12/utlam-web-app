@@ -147,7 +147,6 @@ export const passwordResetSchema = Yup.object().shape({
 export const personalInfoSchema = Yup.object().shape({
   maritalStatus: Yup.string().trim().required("Marital status is required"),
   placeOfBirth: Yup.string().trim().required("Place of birth is required"),
-  // nationality: Yup.string().trim().required("Nationality is required"),
   occupation: Yup.string().trim().required("Occupation is required"),
   religion: Yup.string().trim().required("Religion is required"),
   mothersMaidenName: Yup.string()

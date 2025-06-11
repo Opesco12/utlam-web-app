@@ -45,36 +45,38 @@ const Referral = () => {
     <div className="">
       <HeaderText>Referral</HeaderText>
 
-      <StyledText
-        color={Colors.primary}
-        type="title"
-        variant="semibold"
-      >
-        Invite your friends! Share your referral code and earn rewards when they
-        sign up.
-      </StyledText>
-      <br />
-      <div className="flex items-center gap-2 mt-2">
+      <div className="flex-1 space-y-4 rounded-xl bg-white p-4 md:p-8">
         <StyledText
           color={Colors.primary}
           type="title"
           variant="semibold"
         >
-          {referralCode}
+          Invite your friends! Share your referral code and earn rewards when
+          they sign up.
         </StyledText>
+        <br />
+        <div className="flex items-center gap-2 mt-2">
+          <StyledText
+            color={Colors.primary}
+            type="title"
+            variant="semibold"
+          >
+            {referralCode}
+          </StyledText>
 
-        {copied ? (
-          <CopySuccess
-            size={25}
-            color={Colors.lightPrimary}
-          />
-        ) : (
-          <Copy
-            size={25}
-            color={Colors.lightPrimary}
-            onClick={() => handleCopy(referralCode)}
-          />
-        )}
+          {copied ? (
+            <CopySuccess
+              size={25}
+              color={Colors.lightPrimary}
+            />
+          ) : (
+            <Copy
+              size={25}
+              color={Colors.lightPrimary}
+              onClick={() => handleCopy(referralCode)}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

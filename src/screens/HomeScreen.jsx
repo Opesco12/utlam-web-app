@@ -61,7 +61,7 @@ const HomeScreen = () => {
       fixedIncomePortfolio: [],
       portfolioBalance: 0,
     },
-    slideIndex: 0, // New state for tracking the current slide
+    slideIndex: 0,
   });
 
   const navigate = useNavigate();

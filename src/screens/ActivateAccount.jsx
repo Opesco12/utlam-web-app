@@ -40,8 +40,8 @@ const ActivateAccount = () => {
       const response = await axios.post(
         "https://smile-id.vercel.app/initiate-smilelink",
         {
-          // email: stateData.email,
-          user_id: "oyelekemmanuel@gmail.com",
+          email: stateData.email,
+          // user_id: "oyelekemmanuel@gmail.com",
         }
       );
       const { url, job_id, user_id } = response.data;
