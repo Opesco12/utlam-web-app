@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Calendar, Judge, Moneys, PercentageCircle } from "iconsax-react";
-import { Button, Switch } from "@mui/material";
+import { Switch } from "@mui/material";
 import { Formik, Form } from "formik";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -16,6 +16,10 @@ import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
 import AppModal from "../components/AppModal";
 import AppSelect from "../components/AppSelect";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
+import Tooltip from "../components/Tooltip";
+
+import { amountFormatter } from "../helperFunctions/amountFormatter";
+
 import {
   getProducts,
   mutualFundSubscription,
@@ -24,17 +28,7 @@ import {
   getLiabilityProducts,
   getTenor,
   getWalletBalance,
-  fixedIncomeSubscriptionOrder,
 } from "../api";
-import { amountFormatter } from "../helperFunctions/amountFormatter";
-import Tooltip from "../components/Tooltip";
-
-const validationSchema = Yup.object().shape({
-  amount: Yup.number()
-    .typeError("Amount must be a number")
-    .required("Please input amount")
-    .positive("Amount must be positive"),
-});
 
 const DetailsItem = ({ text, detail, icon, tooltipContent }) => (
   <div className="w-1/2 flex flex-col items-center">
@@ -97,36 +91,46 @@ const InvestmentForm = ({
   userBalance,
   isLiabilityProduct,
   tenorOptions,
+  hasMutualFundInvestment,
   onSubmit,
 }) => {
   const [selectedTenor, setSelectedTenor] = useState("");
+  const minimumInvestment = isLiabilityProduct
+    ? product.minimumInvestment
+    : hasMutualFundInvestment
+    ? product.minimumSubsequentInvestment || product.minimumInvestment
+    : product.minimumInvestment;
+
+  const validationSchema = Yup.object().shape({
+    amount: Yup.number()
+      .typeError("Amount must be a number")
+      .required("Please input amount")
+      .positive("Amount must be positive")
+      .min(
+        minimumInvestment,
+        `Minimum investment is ${amountFormatter.format(minimumInvestment)}`
+      )
+      .max(
+        userBalance || 0,
+        `Amount cannot exceed wallet balance (${amountFormatter.format(
+          userBalance || 0
+        )})`
+      ),
+    ...(isLiabilityProduct && {
+      tenor: Yup.string().required("Please select a tenor"),
+    }),
+  });
 
   return (
     <Formik
-      initialValues={{ amount: "" }}
+      initialValues={{ amount: "", ...(isLiabilityProduct && { tenor: "" }) }}
       validationSchema={validationSchema}
       onSubmit={(values) => {
-        const amount = Number(values.amount);
-        if (amount < product.minimumInvestment) {
-          toast.error(
-            `Minimum investment is ${amountFormatter.format(
-              product.minimumInvestment
-            )}`
-          );
-          return;
-        }
-        if (amount > userBalance) {
-          toast.error("Insufficient wallet balance");
-          return;
-        }
-        if (isLiabilityProduct && !selectedTenor) {
-          toast.error("Please select a tenor");
-          return;
-        }
-        onSubmit(amount, selectedTenor);
+        const { amount, tenor } = values;
+        onSubmit(Number(amount), tenor || selectedTenor);
       }}
     >
-      {({ handleChange }) => (
+      {({ handleChange, setFieldValue }) => (
         <Form className="flex flex-col gap-5">
           <AppTextField
             name="amount"
@@ -137,7 +141,10 @@ const InvestmentForm = ({
             <AppSelect
               name="tenor"
               options={tenorOptions}
-              onValueChange={(value) => setSelectedTenor(value)}
+              onValueChange={(value) => {
+                setSelectedTenor(value);
+                setFieldValue("tenor", value);
+              }}
               label="Tenor"
             />
           )}
@@ -162,6 +169,7 @@ const ProductDetails = () => {
     isModalOpen: false,
     investmentAmount: 0,
     isChecked: false,
+    hasMutualFundInvestment: false,
   });
 
   const navigate = useNavigate();
@@ -183,6 +191,7 @@ const ProductDetails = () => {
       let investmentBalance = 0;
       let liabilityProducts = [];
       let productTenors = [];
+      let hasMutualFundInvestment = false;
 
       if (foundProduct.portfolioType === 9) {
         const balances = await getFixedIcomeOnlineBalances(portfolioId);
@@ -196,7 +205,14 @@ const ProductDetails = () => {
         }
       } else {
         const investment = await getMutualFundOnlineBalance(portfolioId);
-        investmentBalance = investment?.balance || 0;
+        console.log("Investment Balance:", investment);
+        if (investment && typeof investment.balance !== "undefined") {
+          investmentBalance = investment.balance;
+          hasMutualFundInvestment = true;
+        } else {
+          investmentBalance = 0;
+          hasMutualFundInvestment = false;
+        }
       }
 
       setState((prev) => ({
@@ -209,11 +225,9 @@ const ProductDetails = () => {
         liabilityProducts,
         productTenors,
         loading: false,
+        hasMutualFundInvestment,
       }));
-    } catch (error) {
-      toast.error("Failed to load product details");
-      navigate("/404", { replace: true });
-    }
+    } catch (error) {}
   }, [navigate, portfolioId]);
 
   useEffect(() => {
@@ -226,30 +240,34 @@ const ProductDetails = () => {
   }));
 
   const handleInvestment = async (amount, portfolioId) => {
-    console.log(amount, portfolioId);
     setState((prev) => ({ ...prev, processingInvestment: true }));
 
-    const response = await mutualFundSubscription({
-      amount: amount,
-      portfolioId: portfolioId,
-    });
+    try {
+      const response = await mutualFundSubscription({
+        amount: amount,
+        portfolioId: portfolioId,
+      });
 
-    if (response) {
-      toast.success("Invesment Successful");
+      if (response) {
+        toast.success("Investment Successful");
+        setState((prev) => ({
+          ...prev,
+          processingInvestment: false,
+          isModalOpen: false,
+          investmentAmount: 0,
+        }));
+        navigate("/");
+      } else {
+        throw new Error("Investment failed");
+      }
+    } catch (error) {
+      console.error(error);
       setState((prev) => ({
         ...prev,
         processingInvestment: false,
         isModalOpen: false,
-        investmentAmount: 0,
       }));
-      navigate("/");
     }
-
-    setState((prev) => ({
-      ...prev,
-      processingInvestment: false,
-      isModalOpen: false,
-    }));
   };
 
   if (state.loading) {
@@ -298,7 +316,10 @@ const ProductDetails = () => {
                     }
                     text="Minimum Investment"
                     detail={amountFormatter.format(
-                      state.product.minimumInvestment
+                      state.hasMutualFundInvestment
+                        ? state.product.minimumSubsequentInvestment ||
+                            state.product.minimumInvestment
+                        : state.product.minimumInvestment
                     )}
                     tooltipContent={
                       "The smallest amount of money required to start investing"
@@ -357,7 +378,6 @@ const ProductDetails = () => {
                     }
                   />
                 </div>
-
                 <hr className="border-gray-300" />
                 <div className="gap-5 flex item-center justify-center">
                   <DetailsItem
@@ -384,15 +404,15 @@ const ProductDetails = () => {
               userBalance={state.userBalance}
               isLiabilityProduct={state.isLiabilityProduct}
               tenorOptions={tenorOptions}
+              hasMutualFundInvestment={state.hasMutualFundInvestment}
               onSubmit={(amount, tenor) => {
                 setState((prev) => ({
                   ...prev,
                   investmentAmount: amount,
                   selectedTenor: tenor,
                   isModalOpen: state.isLiabilityProduct ? false : true,
-                  // processingInvestment: true,
                 }));
-                if (state?.isLiabilityProduct === true) {
+                if (state.isLiabilityProduct) {
                   navigate("/invest/investment_simulator", {
                     state: { principal: amount, portfolioId: portfolioId },
                   });
