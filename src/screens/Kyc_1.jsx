@@ -63,7 +63,6 @@ const KYC_1 = () => {
       try {
         const data = await getClientInfo();
         setClientData(data);
-        console.log(data);
 
         const pendingDocs = await getPendingDocuments();
         const requiredDocs = pendingDocs.filter(
