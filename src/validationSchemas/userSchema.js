@@ -98,6 +98,7 @@ export const RegisterStep1ValidationSchema = Yup.object().shape({
   email: Yup.string().email("Email is not valid").required("Email is required"),
   dob: Yup.string().required("Date of Birth is required"),
   gender: Yup.string().required("Gender is required"),
+  title: Yup.string().required("Title is required"),
   password: Yup.string()
     .required("Password is required")
     .min(6, "Password must be at least 6 characters")

@@ -13,7 +13,6 @@ import {
   updateClientInfo,
 } from "../api";
 import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
-import AppButton from "../components/AppButton";
 import { Eye, EyeOff } from "lucide-react";
 
 const FileInput = ({ label, uploadButton, ...props }) => {
@@ -64,6 +63,7 @@ const KYC_1 = () => {
       try {
         const data = await getClientInfo();
         setClientData(data);
+        console.log(data);
 
         const pendingDocs = await getPendingDocuments();
         const requiredDocs = pendingDocs.filter(

@@ -40,6 +40,7 @@ const Register = () => {
     confirmPassword: "",
     dob: "",
     gender: "",
+    title: "",
     country: "",
     address: "",
     city: "",
@@ -101,6 +102,29 @@ const Register = () => {
   const handlePrevStep = () => {
     setStep(1);
   };
+
+  const titleOptions = [
+    {
+      transId: 4,
+      value: "Chief",
+      label: "Chief",
+    },
+    {
+      transId: 1,
+      value: "Miss",
+      label: "Miss",
+    },
+    {
+      transId: 2,
+      value: "Mr",
+      label: "Mr",
+    },
+    {
+      transId: 3,
+      value: "Mrs",
+      label: "Mrs",
+    },
+  ];
 
   return (
     <div className="w-full h-screen overflow-hidden">
@@ -195,11 +219,21 @@ const Register = () => {
                         }}
                         label="Gender"
                       />
+
+                      <AppSelect
+                        name="title"
+                        options={titleOptions}
+                        onValueChange={(value) => {
+                          setFormData({ ...formData, title: value });
+                          setFieldValue("title", value);
+                        }}
+                        label="Title"
+                      />
+
                       <AppTextField
                         type="date"
                         name="dob"
                         label="Date of birth"
-                        placeholder=""
                         onChange={handleChange("dob")}
                       />
                       <AppTextField

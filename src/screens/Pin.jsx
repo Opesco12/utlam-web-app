@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
+import { Lock, Refresh } from "iconsax-react";
 
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
@@ -14,7 +15,6 @@ import {
   resetTransactionPin,
   resetTransactionPinRequest,
 } from "../api";
-import { Lock, Refresh, TagRight } from "iconsax-react";
 import StyledText from "../components/StyledText";
 
 const Pin = () => {

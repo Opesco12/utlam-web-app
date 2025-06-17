@@ -23,7 +23,7 @@ const Otp = () => {
 
   const email = searchParams.get("email") || "";
   const header = searchParams.get("header") || "OTP Verification";
-  const isActivation = !!searchParams.get("header"); // Determines if it's activation flow
+  const isActivation = !!searchParams.get("header");
 
   const [code, setCode] = useState(Array(OTP_LENGTH).fill(""));
   const [loading, setLoading] = useState(false);
