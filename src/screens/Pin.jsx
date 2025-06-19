@@ -175,12 +175,6 @@ const Pin = () => {
     const pinString = pin.join("");
     const confirmPinString = confirmPin.join("");
 
-    if (pinString.startsWith("0")) {
-      toast.error("PIN cannot start with zero");
-      setIsSubmitting(false);
-      return;
-    }
-
     if (pinString.length !== 4 || confirmPinString.length !== 4) {
       toast.error("Please enter all 4 digits");
       setIsSubmitting(false);
@@ -195,7 +189,7 @@ const Pin = () => {
 
     const requestData = {
       accountNo: walletBalance?.[0]?.walletAccountNo,
-      transactionPin: Number(pinString),
+      transactionPin: pinString,
     };
 
     try {
@@ -222,11 +216,11 @@ const Pin = () => {
     const newPinString = newPin.join("");
     const confirmNewPinString = confirmNewPin.join("");
 
-    if (newPinString.startsWith("0")) {
-      toast.error("PIN cannot start with zero");
-      setIsSubmitting(false);
-      return;
-    }
+    // if (newPinString.startsWith("0")) {
+    //   toast.error("PIN cannot start with zero");
+    //   setIsSubmitting(false);
+    //   return;
+    // }
 
     if (
       oldPinString.length !== 4 ||
@@ -251,8 +245,8 @@ const Pin = () => {
     }
 
     const requestData = {
-      oldPassword: Number(oldPinString),
-      newPassword: Number(newPinString),
+      oldPassword: oldPinString,
+      newPassword: newPinString,
     };
 
     try {
@@ -305,12 +299,6 @@ const Pin = () => {
     const newPinString = resetNewPin.join("");
     const confirmPinString = resetConfirmPin.join("");
 
-    if (newPinString.startsWith("0")) {
-      toast.error("PIN cannot start with zero");
-      setIsSubmitting(false);
-      return;
-    }
-
     if (!resetToken.trim()) {
       toast.error("Please enter the reset token");
       setIsSubmitting(false);
@@ -331,7 +319,7 @@ const Pin = () => {
 
     const requestData = {
       token: resetToken,
-      newTransactionPin: Number(newPinString),
+      newTransactionPin: newPinString,
     };
 
     try {

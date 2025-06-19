@@ -171,7 +171,7 @@ const HomeScreen = () => {
         currencyCode: "NGN",
         amount,
         beneficiaryBankAccountNo: state.clientBanks[0]?.beneficiaryAccountNo,
-        transactionPin: Number(pinString),
+        transactionPin: pinString,
       };
 
       const response = await debitWallet(requestData);
