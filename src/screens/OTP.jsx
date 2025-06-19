@@ -95,7 +95,7 @@ const Otp = () => {
                 variant="semibold"
                 color={Colors.primary}
               >
-                {header}
+                OTP Verification
               </StyledText>
               <br />
               <StyledText
