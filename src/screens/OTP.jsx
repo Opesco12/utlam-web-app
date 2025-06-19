@@ -49,21 +49,6 @@ const Otp = () => {
     }
   }, [code, email, navigate, setIsAuthenticated, searchParams]);
 
-  const handleResendCode = useCallback(async () => {
-    if (!email) return;
-    setLoading(true);
-    try {
-      const data = await resnedActivationCode({ userName: email });
-      if (data) {
-        toast.success("Activation code has been sent successfully");
-      }
-    } catch (error) {
-      toast.error("Failed to resend activation code");
-    } finally {
-      setLoading(false);
-    }
-  }, [email]);
-
   const handleKeyDown = useCallback(
     (event) => {
       if (event.key === "Enter" && code.join("").length === OTP_LENGTH) {
@@ -120,17 +105,6 @@ const Otp = () => {
             >
               {loading ? <SmallLoadingSpinner /> : "Submit"}
             </AppButton>
-            <div className="my-3 text-center">
-              <StyledText color={Colors.light}>
-                Didn't get a code?{" "}
-                <span
-                  className="text-primary font-semibold cursor-pointer"
-                  onClick={handleResendCode}
-                >
-                  Resend Code
-                </span>
-              </StyledText>
-            </div>
           </div>
         </div>
       </div>
