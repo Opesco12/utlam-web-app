@@ -7,7 +7,7 @@ import OtpInput from "../components/Otp_Input";
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
 import { obfuscateEmail } from "../helperFunctions/obfuscateEmail";
-import { activateAccount, login2fa, resnedActivationCode } from "../api";
+import { login2fa, resnedActivationCode } from "../api";
 import { userStorage } from "../storage/userStorage";
 import { keys } from "../storage/kyes";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
@@ -22,8 +22,6 @@ const Otp = () => {
   const [searchParams] = useSearchParams();
 
   const email = searchParams.get("email") || "";
-  const header = searchParams.get("header") || "OTP Verification";
-  const isActivation = !!searchParams.get("header");
 
   const [code, setCode] = useState(Array(OTP_LENGTH).fill(""));
   const [loading, setLoading] = useState(false);
@@ -33,33 +31,23 @@ const Otp = () => {
 
     setLoading(true);
     try {
-      if (isActivation) {
-        const info = { username: email, securityCode: code.join("") };
-        const data = await activateAccount(info);
-        if (data) {
-          toast.success("Your account has been successfully activated", {
-            onAutoClose: () => navigate("/login"),
-          });
-        }
-      } else {
-        const data = await login2fa({ email, code: code.join("") });
-        if (data) {
-          toast.success("Login Successful", {
-            onAutoClose: () => {
-              userStorage.setItem(keys.user, data);
-              setIsAuthenticated(true);
-              const from = searchParams.get("from") || "/";
-              navigate(from, { replace: true });
-            },
-          });
-        }
+      const data = await login2fa({ email, code: code.join("") });
+      if (data) {
+        toast.success("Login Successful", {
+          onAutoClose: () => {
+            userStorage.setItem(keys.user, data);
+            setIsAuthenticated(true);
+            const from = searchParams.get("from") || "/";
+            navigate(from, { replace: true });
+          },
+        });
       }
     } catch (error) {
       toast.error("Invalid security code");
     } finally {
       setLoading(false);
     }
-  }, [code, email, isActivation, navigate, setIsAuthenticated, searchParams]);
+  }, [code, email, navigate, setIsAuthenticated, searchParams]);
 
   const handleResendCode = useCallback(async () => {
     if (!email) return;
@@ -116,7 +104,8 @@ const Otp = () => {
                 type="body"
               >
                 We have sent a security code to your email address{" "}
-                {email && obfuscateEmail(email)}. Enter the code below to verify
+                {email && obfuscateEmail(email)}. Enter the code below to
+                verify.
               </StyledText>
             </div>
             <div className="mb-7">
@@ -131,19 +120,17 @@ const Otp = () => {
             >
               {loading ? <SmallLoadingSpinner /> : "Submit"}
             </AppButton>
-            {isActivation && (
-              <div className="my-3 text-center">
-                <StyledText color={Colors.light}>
-                  Didn't get a code?{" "}
-                  <span
-                    className="text-primary font-semibold cursor-pointer"
-                    onClick={handleResendCode}
-                  >
-                    Resend Code
-                  </span>
-                </StyledText>
-              </div>
-            )}
+            <div className="my-3 text-center">
+              <StyledText color={Colors.light}>
+                Didn't get a code?{" "}
+                <span
+                  className="text-primary font-semibold cursor-pointer"
+                  onClick={handleResendCode}
+                >
+                  Resend Code
+                </span>
+              </StyledText>
+            </div>
           </div>
         </div>
       </div>
