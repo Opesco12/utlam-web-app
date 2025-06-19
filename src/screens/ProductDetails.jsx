@@ -105,7 +105,7 @@ const InvestmentForm = ({
     amount: Yup.number()
       .typeError("Amount must be a number")
       .required("Please input amount")
-      .positive("Amount must be positive")
+      .positive("Amount must be greater than 0")
       .min(
         minimumInvestment,
         `Minimum investment is ${amountFormatter.format(minimumInvestment)}`
@@ -205,7 +205,6 @@ const ProductDetails = () => {
         }
       } else {
         const investment = await getMutualFundOnlineBalance(portfolioId);
-        console.log("Investment Balance:", investment);
         if (investment && typeof investment.balance !== "undefined") {
           investmentBalance = investment.balance;
           hasMutualFundInvestment = true;
@@ -414,7 +413,11 @@ const ProductDetails = () => {
                 }));
                 if (state.isLiabilityProduct) {
                   navigate("/invest/investment_simulator", {
-                    state: { principal: amount, portfolioId: portfolioId },
+                    state: {
+                      principal: amount,
+                      portfolioId: portfolioId,
+                      tenor: tenor,
+                    },
                   });
                 }
               }}

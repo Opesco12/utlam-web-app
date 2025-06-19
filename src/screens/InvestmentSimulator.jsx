@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Formik, Field } from "formik";
 import * as Yup from "yup";
 import { Switch } from "@mui/material";
+import { toast } from "sonner";
 
 import HeaderText from "../components/HeaderText";
 import ContentBox from "../components/ContentBox";
@@ -15,11 +16,9 @@ import {
   getLiabilityProducts,
   getProducts,
   getTenor,
-  mutualFundSubscription,
   fixedIncomeSubscriptionOrder,
   getWalletBalance,
 } from "../api";
-import { toast } from "sonner";
 
 const InvestmentSimulator = () => {
   const [investibleProducts, setInvestibleProducts] = useState([]);
@@ -100,21 +99,6 @@ const InvestmentSimulator = () => {
     return selectedProduct?.isLiabilityProduct;
   };
 
-  const getMinimumHoldingPeriod = (portfolioId) => {
-    const selectedProduct = productOptions.find(
-      (product) => product.value === Number(portfolioId)
-    );
-    return selectedProduct?.minimumHoldingPeriod;
-  };
-
-  const getMutualFundInterest = (portfolioId) => {
-    const selectedProduct = productOptions.find(
-      (product) => product.value === Number(portfolioId)
-    );
-
-    return selectedProduct?.return;
-  };
-
   const getSelectedProductName = (portfolioId) => {
     const selectedProduct = productOptions.find(
       (product) => product.value === Number(portfolioId)
@@ -184,31 +168,6 @@ const InvestmentSimulator = () => {
     }
   };
 
-  const handleMutualFundInvestment = async (amount, portfolioId) => {
-    try {
-      const data = await mutualFundSubscription({
-        portfolioId: portfolioId,
-        amount: amount,
-      });
-      if (data) {
-        toast.success(
-          `Successfully invested ${amountFormatter.format(
-            amount
-          )} in ${getSelectedProductName(portfolioId)}`
-        );
-        navigate("/");
-      }
-    } catch (error) {
-      toast.error("An error occured while processing investment");
-    } finally {
-      setState((prev) => ({
-        ...prev,
-        processingInvestment: false,
-        isModalOpen: false,
-      }));
-    }
-  };
-
   const handleInvestment = async (amount, portfolioId, tenor) => {
     setState((prev) => ({
       ...prev,
@@ -219,9 +178,6 @@ const InvestmentSimulator = () => {
     if (isLiabilityProduct(portfolioId) === true) {
       await handleLiabilityProductInvestment(amount, portfolioId, tenor);
     }
-    //  else {
-    //   await handleMutualFundInvestment(amount, portfolioId);
-    // }
 
     setState((prev) => ({
       ...prev,
@@ -229,6 +185,16 @@ const InvestmentSimulator = () => {
       isModalOpen: false,
     }));
   };
+
+  useEffect(() => {
+    const fetchTenor = async () => {
+      if (data?.portfolioId) {
+        await getProductTenors(data.portfolioId);
+      }
+    };
+
+    fetchTenor();
+  }, [data]);
 
   return (
     <div>
@@ -239,7 +205,7 @@ const InvestmentSimulator = () => {
           initialValues={{
             amount: data?.principal || "",
             portfolioId: data?.portfolioId || "",
-            tenor: "",
+            tenor: data?.tenor || "",
           }}
           enableReinitialize={true}
           validationSchema={validationSchema}

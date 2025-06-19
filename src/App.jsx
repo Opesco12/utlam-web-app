@@ -212,10 +212,6 @@ function App() {
                 path="/profile/pin"
                 element={<Pin />}
               />
-              <Route
-                path="/404"
-                element={<NotFound />}
-              />
             </Route>
             <Route
               index
@@ -288,6 +284,10 @@ function App() {
                   <Register />
                 </PublicRoute>
               }
+            />
+            <Route
+              path="/404"
+              element={<NotFound />}
             />
             <Route
               path="*"

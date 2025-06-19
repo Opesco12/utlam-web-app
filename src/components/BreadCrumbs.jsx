@@ -70,6 +70,7 @@ const Breadcrumbs = () => {
         .filter((segment) => segment);
 
       const hiddenRoutes = [
+        "/404",
         "/",
         "/portfolio",
         "/profile",
