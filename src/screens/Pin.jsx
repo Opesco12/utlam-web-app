@@ -293,6 +293,12 @@ const Pin = () => {
     const newPinString = resetNewPin.join("");
     const confirmPinString = resetConfirmPin.join("");
 
+    if (newPinString.startsWith("0")) {
+      toast.error("PIN cannot start with zero");
+      setIsSubmitting(false);
+      return;
+    }
+
     if (!resetToken.trim()) {
       toast.error("Please enter the reset token");
       setIsSubmitting(false);
