@@ -175,6 +175,12 @@ const Pin = () => {
     const pinString = pin.join("");
     const confirmPinString = confirmPin.join("");
 
+    if (newPinString.startsWith("0")) {
+      toast.error("PIN cannot start with zero");
+      setIsSubmitting(false);
+      return;
+    }
+
     if (pinString.length !== 4 || confirmPinString.length !== 4) {
       toast.error("Please enter all 4 digits");
       setIsSubmitting(false);
@@ -292,12 +298,6 @@ const Pin = () => {
     setIsSubmitting(true);
     const newPinString = resetNewPin.join("");
     const confirmPinString = resetConfirmPin.join("");
-
-    if (newPinString.startsWith("0")) {
-      toast.error("PIN cannot start with zero");
-      setIsSubmitting(false);
-      return;
-    }
 
     if (!resetToken.trim()) {
       toast.error("Please enter the reset token");
