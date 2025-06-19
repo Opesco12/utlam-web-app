@@ -7,7 +7,7 @@ import OtpInput from "../components/Otp_Input";
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
 import { obfuscateEmail } from "../helperFunctions/obfuscateEmail";
-import { activateAccount, login2fa, resnedActivationCode } from "../api";
+import { activateAccount, resnedActivationCode } from "../api";
 import SmallLoadingSpinner from "../components/SmallLoadingSpinner";
 
 import { useAuth } from "../context/AuthProvider";

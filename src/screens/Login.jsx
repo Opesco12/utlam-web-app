@@ -72,12 +72,9 @@ const Login = () => {
                         "Account is inactive. Please activate account"
                       );
                       navigate(
-                        `/account/activate?email=${encodeURIComponent(
-                          email
-                        )}&header=Activate Account&from=${encodeURIComponent(
-                          from
-                        )}`
+                        `/account/activate?email=${encodeURIComponent(email)}`
                       );
+                      return;
                     }
                     navigate(
                       `/account/2fa?email=${encodeURIComponent(

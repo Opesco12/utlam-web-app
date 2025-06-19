@@ -157,7 +157,7 @@ const Profile = () => {
           color={Colors.primary}
         />
       ),
-      title: "Pin Management",
+      title: "PIN Management",
       path: "/profile/pin",
     },
     {
