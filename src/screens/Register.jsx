@@ -332,9 +332,11 @@ const Register = () => {
                       toast.success(
                         "Your account has been created successfully"
                       );
-                      navigate("/account/activate", {
-                        state: { email: email, header: "Activate Account" },
-                      });
+                      navigate(
+                        `/account/activate?email=${encodeURIComponent(
+                          email
+                        )}&header=Activate Account`
+                      );
                     }
 
                     setSubmitting(false);

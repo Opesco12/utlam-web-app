@@ -69,9 +69,12 @@ const RegisterExistingUser = () => {
                   });
 
                   if (userData) {
-                    navigate("/account/activate", {
-                      state: { email: email, header: "Activate Account" },
-                    });
+                    navigate(
+                      `/account/activate?email=${encodeURIComponent(
+                        email
+                      )}&header=Activate Account`
+                    );
+                    toast.success("Registration Successful");
                   }
                 } catch (error) {
                   toast.error(
