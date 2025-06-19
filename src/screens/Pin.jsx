@@ -175,7 +175,7 @@ const Pin = () => {
     const pinString = pin.join("");
     const confirmPinString = confirmPin.join("");
 
-    if (newPinString.startsWith("0")) {
+    if (pinString.startsWith("0")) {
       toast.error("PIN cannot start with zero");
       setIsSubmitting(false);
       return;
