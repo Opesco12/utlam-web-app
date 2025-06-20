@@ -25,12 +25,10 @@ const PortfolioDetails = () => {
   const product = location.state;
   console.log(product);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [walletBalance, setWalletBalance] = useState(0);
 
   const findProduct = async () => {
-    setLoading(true);
-
     if (!product) {
       navigate("/portfolio");
     }

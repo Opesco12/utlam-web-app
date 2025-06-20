@@ -132,7 +132,7 @@ const KYC_1 = () => {
         mobileNumber: clientData?.mobileNumber,
         gender: clientData?.gender,
         titleCode: clientData?.titleCode,
-        nin: values?.nin,
+        // nin: values?.nin,
         bvn: values?.bvn,
       });
       if (data) {
@@ -242,13 +242,11 @@ const KYC_1 = () => {
                   )}
                 </div>
 
-                {(clientData?.nin === null || clientData?.bvn === null) && (
+                {clientData?.bvn === null && (
                   <button
                     type="submit"
                     className="bg-primary w-full text-white py-2 px-4 rounded-md hover:bg-lightPrimary transition-colors mt-6"
-                    disabled={
-                      isSubmitting && clientData?.nin && clientData?.bvn
-                    }
+                    disabled={isSubmitting && clientData?.bvn}
                   >
                     {isSubmitting ? (
                       <SmallLoadingSpinner color={Colors.white} />

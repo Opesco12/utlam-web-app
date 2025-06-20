@@ -7,11 +7,9 @@ import StyledText from "./StyledText";
 import { Colors } from "../constants/Colors";
 import { amountFormatter } from "../helperFunctions/amountFormatter";
 
-const PortfolioItem = ({ product }) => {
+const PortfolioItem = ({ product, setIsModalOpen }) => {
   const navigate = useNavigate();
   const [fixedIncomeBalance, setFixedIncomeBalance] = useState(0);
-
-  console.log("Portfolio item: ", product);
 
   useEffect(() => {
     if (product?.portfolioType === 9) {
@@ -27,13 +25,14 @@ const PortfolioItem = ({ product }) => {
     <div className="border border-gray-300 p-[10px] rounded-lg bg-white hover:bg-gray-100  cursor-pointer">
       <div
         onClick={() => {
-          product?.portfolio !== "Wallet" &&
-            navigate(`/portfolio/${_.kebabCase(product?.portfolio)}`, {
-              state:
-                product.portfolioType === 9
-                  ? { ...product, balance: fixedIncomeBalance }
-                  : product,
-            });
+          product?.portfolio === "Wallet"
+            ? setIsModalOpen(true)
+            : navigate(`/portfolio/${_.kebabCase(product?.portfolio)}`, {
+                state:
+                  product.portfolioType === 9
+                    ? { ...product, balance: fixedIncomeBalance }
+                    : product,
+              });
         }}
         className="flex justify-between items-center "
       >

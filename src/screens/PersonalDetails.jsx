@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { EyeOff, Eye } from "lucide-react";
 
 import HeaderText from "../components/HeaderText";
 import { Colors } from "../constants/Colors";
@@ -87,6 +88,7 @@ const PersonalInfoForm = ({
     firstname: userData?.firstname || "",
     surname: userData?.surname || "",
     phoneNumber: userData?.mobileNumber || "",
+    nin: userData?.nin || "",
     maritalStatus: userData?.maritalStatus || "",
     titleCode: userData?.titleCode || "",
     placeOfBirth: userData?.placeOfBirth || "",
@@ -95,6 +97,8 @@ const PersonalInfoForm = ({
     mothersMaidenName: userData?.mothersMaidenName || "",
   };
 
+  const [showNIN, setShowNIN] = useState(false);
+
   return (
     <Formik
       validationSchema={personalInfoSchema}
@@ -102,7 +106,7 @@ const PersonalInfoForm = ({
       onSubmit={onSubmit}
       enableReinitialize
     >
-      {({ isSubmitting }) => (
+      {({ isSubmitting, errors }) => (
         <Form className="w-full">
           <div className="flex flex-col gap-4">
             <div className="flex justify-between relative">
@@ -127,6 +131,33 @@ const PersonalInfoForm = ({
               label="Phone Number"
               disabled
             />
+
+            <div className="mb-1 relative">
+              <label
+                htmlFor="nin"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                National Identification Number
+              </label>
+              <Field
+                id="nin"
+                name="nin"
+                type={showNIN ? "text" : "password"}
+                className="w-full p-2 border border-gray-300 rounded-md pr-10"
+                disabled={userData?.nin !== null}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-9 text-gray-500"
+                tabIndex={-1}
+                onClick={() => setShowNIN((prev) => !prev)}
+              >
+                {showNIN ? <EyeOff /> : <Eye />}
+              </button>
+              {errors.nin && (
+                <div className="text-red-600 text-sm mt-1">{errors.nin}</div>
+              )}
+            </div>
 
             <SelectField
               name="maritalStatus"
@@ -363,7 +394,7 @@ const PersonalDetails = () => {
     fetchData();
   }, []);
 
-  const handlePersonalInfoSubmit = async (values, { setSubmitting }) => {
+  const handlePersonalInfoSubmit = async (values) => {
     try {
       const transId = titleOptions?.find(
         (option) => option?.value == values?.titleCode
@@ -389,6 +420,7 @@ const PersonalDetails = () => {
         religion: values?.religion,
         mothersMaidenName: values?.mothersMaidenName,
         placeOfBirth: values?.placeOfBirth,
+        nin: values?.nin,
       });
       if (data) {
         toast.success("Personal Information Updated Successfully");

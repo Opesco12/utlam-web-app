@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Moneys } from "iconsax-react";
+import { Moneys, Bank } from "iconsax-react";
+import { toast } from "sonner";
 
 import { Colors } from "../constants/Colors";
 import HeaderText from "../components/HeaderText";
@@ -7,6 +8,8 @@ import StyledText from "../components/StyledText";
 import ContentBox from "../components/ContentBox";
 import LargeLoadingSpinner from "../components/LargeLoadingSpinner";
 import PortfolioItem from "../components/PortfolioItem";
+import AppModal from "../components/AppModal";
+import VirtualAccountItem from "../components/VirtualAccountItem";
 
 import { amountFormatter } from "../helperFunctions/amountFormatter";
 import {
@@ -14,9 +17,13 @@ import {
   getFixedIcomeOnlineBalances,
   getProducts,
   getMutualFundOnlineBalances,
+  getVirtualAccounts,
 } from "../api";
 
 const Portfolio = () => {
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [virtualAccounts, setVirtualAccounts] = useState([]);
   const [portfolioData, setPortfolioData] = useState({
     walletBalance: 0,
     mutualFundBalances: [],
@@ -29,12 +36,17 @@ const Portfolio = () => {
     const fetchPortfolioData = async () => {
       setLoading(true);
       try {
-        const [walletBalance, mutualFundBalances, investibleProducts] =
-          await Promise.all([
-            getWalletBalance(),
-            getMutualFundOnlineBalances(),
-            getProducts(),
-          ]);
+        const [
+          walletBalance,
+          mutualFundBalances,
+          investibleProducts,
+          accounts,
+        ] = await Promise.all([
+          getWalletBalance(),
+          getMutualFundOnlineBalances(),
+          getProducts(),
+          getVirtualAccounts(),
+        ]);
 
         const fixedIncomePortfolio = await Promise.all(
           investibleProducts
@@ -80,6 +92,8 @@ const Portfolio = () => {
           fixedIncomePortfolio: validFixedIncomePortfolio,
           totalBalance,
         });
+
+        setVirtualAccounts(accounts);
       } catch (error) {
         console.error("Error fetching portfolio data:", error);
       } finally {
@@ -89,6 +103,15 @@ const Portfolio = () => {
 
     fetchPortfolioData();
   }, []);
+
+  const handleCopy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success("Copied");
+      setTimeout(() => setCopied(true), 2000);
+    } catch (err) {}
+  };
 
   if (loading) {
     return (
@@ -134,6 +157,7 @@ const Portfolio = () => {
               portfolio: "Wallet",
               balance: portfolioData.walletBalance,
             }}
+            setIsModalOpen={setIsDepositModalOpen}
           />
           {portfolioData.mutualFundBalances?.map((portfolio, index) => (
             <PortfolioItem
@@ -149,6 +173,30 @@ const Portfolio = () => {
           ))}
         </div>
       </ContentBox>
+      <AppModal
+        isOpen={isDepositModalOpen}
+        onClose={() => setIsDepositModalOpen(false)}
+        title="Virtual Accounts"
+      >
+        <div>
+          <Bank
+            size={50}
+            color={Colors.primary}
+            className="mx-auto mt-[20px] mb-[35px]"
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-[10px]">
+            {virtualAccounts?.length > 0 &&
+              virtualAccounts.map((account, index) => (
+                <VirtualAccountItem
+                  key={index}
+                  account={account}
+                  copied={copied}
+                  onCopy={handleCopy}
+                />
+              ))}
+          </div>
+        </div>
+      </AppModal>
     </div>
   );
 };

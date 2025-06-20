@@ -87,10 +87,7 @@ const HomeScreen = () => {
       setState((prev) => ({ ...prev, copied: true }));
       toast.success("Copied");
       setTimeout(() => setState((prev) => ({ ...prev, copied: false })), 2000);
-    } catch (err) {
-      console.error("Failed to copy text:", err);
-      toast.error("Failed to copy text");
-    }
+    } catch (err) {}
   };
 
   const handlePinChange = (index, value) => {
