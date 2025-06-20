@@ -245,8 +245,8 @@ const Pin = () => {
     }
 
     const requestData = {
-      oldPassword: oldPinString,
-      newPassword: newPinString,
+      oldPin: oldPinString,
+      newPin: newPinString,
     };
 
     try {
