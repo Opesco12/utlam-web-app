@@ -89,6 +89,7 @@ const Register = () => {
 
   const handleNextStep = async (values, validateForm) => {
     const errors = await validateForm(values);
+    console.log(errors);
     if (!errors || Object.keys(errors).length === 0) {
       setFormData({ ...formData, ...values });
       setStep(2);
