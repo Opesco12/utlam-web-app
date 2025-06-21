@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { Toaster, toast } from "sonner";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
@@ -115,15 +115,10 @@ const ResetPassword = () => {
                   if (response) {
                     toast.success("Password Reset Succesful");
                     setIsEmailRegistered(false);
-                    // navigate("/login");
+                    navigate("/login");
                   }
                 } else {
                   const response = await resetPasswordRequest(email);
-                  console.log(response);
-                  console.log(
-                    "This is the response from the server: ",
-                    response
-                  );
                   if (response) setIsEmailRegistered(true);
                 }
                 setSubmitting(false);
